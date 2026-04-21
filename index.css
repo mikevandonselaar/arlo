@@ -1,0 +1,24 @@
+@import 'tailwindcss' source(none);
+@source './**/*.{js,ts,jsx,tsx}';
+@import 'tw-animate-css';
+@import './styles/globals.css';
+
+@layer base {
+  html, body, #root { min-height: 100vh; height: 100%; margin: 0; }
+
+  /*
+   * Safe area insets — keeps content clear of the iOS notch, home indicator,
+   * and Android camera cutout when the app runs as a standalone PWA.
+   * Requires viewport-fit=cover in the <meta name="viewport"> tag (see index.html).
+   *
+   * On devices with no notch/cutout all four insets resolve to 0, so this
+   * has no visual effect on regular browsers or desktop.
+   */
+  body {
+    padding-top:    env(safe-area-inset-top);
+    padding-right:  env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left:   env(safe-area-inset-left);
+    box-sizing: border-box;
+  }
+}

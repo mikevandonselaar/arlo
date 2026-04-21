@@ -1,0 +1,39 @@
+{
+  "id": "arlo-app",
+  "name": "Arlo",
+  "short_name": "Arlo",
+  "description": "In-store shopping redefined by KODA",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "sizes": "490x1057",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "In-store shopping redefined"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop.png",
+      "sizes": "1643x1224",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "In-store shopping redefined"
+    }
+  ]
+}
