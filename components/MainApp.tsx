@@ -13,7 +13,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  image: string;        // always photos[0] — the garment photo
+  photos?: string[];    // all captured photos [garment, ean, label] — session only, not persisted
   brand: string;
   category: string;
   ean?: string;

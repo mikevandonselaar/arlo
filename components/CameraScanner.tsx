@@ -92,7 +92,8 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         price:     extraction.price ?? 0,
         brand:     extraction.brand,
         category:  extraction.category,
-        image:     capturedPhotos[0], // S4: garment photo (index 0) → cart thumbnail (B4)
+        image:     capturedPhotos[0], // garment photo → cart thumbnail (B4)
+        photos:    [...capturedPhotos], // all photos for detail viewer (B5/B8)
         ean:       extraction.ean ?? undefined,
         size:      extraction.size ?? undefined,
         color:     extraction.color ?? undefined,
@@ -131,6 +132,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
       id:        eanTrimmed ?? scannedProduct.id,
       scannedAt: editState.scannedAt.trim() || scannedProduct.scannedAt,
       shippedBy: editState.brand.trim()     || scannedProduct.brand,
+      photos:    scannedProduct.photos,     // carry all photos through to the cart
     });
     setScannedProduct(null);
     setEditState(null);
