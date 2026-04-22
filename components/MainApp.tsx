@@ -110,7 +110,12 @@ export function MainApp({ onSignOut }: MainAppProps) {
         className="h-screen w-full overflow-hidden"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
       >
-        {currentPage === 'home' && <HomePage onAddToCart={addToCart} />}
+        {currentPage === 'home' && (
+          <HomePage
+            onAddToCart={addToCart}
+            onStartScanning={() => setCurrentPage('camera')}
+          />
+        )}
         {currentPage === 'camera' && <CameraScanner onAddToCart={addToCart} />}
         {currentPage === 'cart' && (
           <CartPage
@@ -133,7 +138,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <button
             onClick={() => setCurrentPage('home')}
             className={`flex flex-col items-center justify-center transition-colors ${
-              currentPage === 'home' ? 'text-[#51EAA7]' : 'text-gray-400'
+              currentPage === 'home' ? 'text-[#651610]' : 'text-gray-400'
             }`}
           >
             <Home className="w-6 h-6" />
@@ -144,8 +149,8 @@ export function MainApp({ onSignOut }: MainAppProps) {
             onClick={() => setCurrentPage('camera')}
             className="flex flex-col items-center justify-center -mt-10"
           >
-            <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 bg-[#51EAA7]">
-              <Camera className="w-7 h-7 text-black" />
+            <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 bg-[#651610]">
+              <Camera className="w-7 h-7 text-white" />
             </div>
             <span className="text-[10px] mt-2 font-medium text-gray-400">Scan</span>
           </button>
@@ -153,12 +158,12 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <button
             onClick={() => setCurrentPage('cart')}
             className={`flex flex-col items-center justify-center transition-colors relative ${
-              currentPage === 'cart' ? 'text-[#aab2ff]' : 'text-gray-400'
+              currentPage === 'cart' ? 'text-[#651610]' : 'text-gray-400'
             }`}
           >
             <ShoppingCart className="w-6 h-6" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+              <span className="absolute -top-1 -right-1 bg-[#651610] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                 {cartItemCount}
               </span>
             )}
@@ -168,7 +173,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <button
             onClick={() => setCurrentPage('profile')}
             className={`flex flex-col items-center justify-center transition-colors ${
-              currentPage === 'profile' ? 'text-[#eca0ff]' : 'text-gray-400'
+              currentPage === 'profile' ? 'text-[#651610]' : 'text-gray-400'
             }`}
           >
             <User className="w-6 h-6" />

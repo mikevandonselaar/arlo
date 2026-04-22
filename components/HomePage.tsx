@@ -1,188 +1,244 @@
 import { useState, useRef } from 'react';
-import { MapPin, Star, Store, ArrowRight, Zap } from 'lucide-react';
+import { Zap, ArrowRight, Mail } from 'lucide-react';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Product } from './MainApp';
+import { toast } from 'sonner';
+
+// Hardcoded waitlist count — replace with live backend counter (PL2)
+const WAITLIST_COUNT = 147;
 
 interface HomePageProps {
   onAddToCart: (product: Product) => void;
+  onStartScanning: () => void;
 }
 
-interface Campaign {
-  id: string;
-  brand: string;
-  title: string;
-  subtitle: string;
-  image: string;
-  location: string;
-  storeCount: number;
-  exclusive: boolean;
-  color: string;
-  badge?: string;
+function InstagramIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
 }
 
-const campaigns: Campaign[] = [
-  {
-    id: '1',
-    brand: 'NN07',
-    title: 'No Nationality',
-    subtitle: 'The Copenhagen Edit. Minimalist essentials for the modern traveler.',
-    image: 'https://images.unsplash.com/photo-1580837303653-5112afbac20d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2FuZGluYXZpYW4lMjBtZW5zd2VhciUyMG1pbmltYWxpc3QlMjBmYXNoaW9ufGVufDF8fHx8MTc2OTcxNzE4OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    location: 'Soho, London',
-    storeCount: 2,
-    exclusive: true,
-    color: '#51EAA7',
-    badge: 'NEW IN'
-  },
-  {
-    id: '2',
-    brand: 'NUDE PROJECT',
-    title: 'By Friends, For Friends',
-    subtitle: 'Barcelona streetwear arrives in London. In-store exclusive drops.',
-    image: 'https://images.unsplash.com/photo-1763034281294-27b792125e71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHJlZXR3ZWFyJTIwYWVzdGhldGljJTIwZmFzaGlvbiUyMHlvdW5nJTIwYWR1bHRzfGVufDF8fHx8MTc2OTcxNzE4OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    location: 'Shoreditch, London',
-    storeCount: 1,
-    exclusive: true,
-    color: '#eca0ff',
-    badge: 'EXCLUSIVE'
-  },
-  {
-    id: '3',
-    brand: 'ADIDAS',
-    title: 'Originals Archive',
-    subtitle: 'Classic silhouettes re-imagined. Scannable at Oxford St.',
-    image: 'https://images.unsplash.com/photo-1724934732583-22704a86c00d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZGlkYXMlMjBzbmVha2VycyUyMGxpZmVzdHlsZSUyMGZhc2hpb258ZW58MXx8fHwxNzY5NzE3MTg1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    location: 'Oxford St, London',
-    storeCount: 12,
-    exclusive: false,
-    color: '#aab2ff',
-    badge: 'RESTOCK'
-  },
-  {
-    id: '4',
-    brand: 'COS',
-    title: 'Spring Tailoring',
-    subtitle: 'Functional design for everyday life. Shop the new collection.',
-    image: 'https://images.unsplash.com/photo-1759229874709-a8d0de083b91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3MlMjBtaW5pbWFsaXN0JTIwZmFzaGlvbiUyMHdvbWVuc3dlYXJ8ZW58MXx8fHwxNzY5NzE3MTg1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    location: 'Regent St, London',
-    storeCount: 4,
-    exclusive: true,
-    color: '#51EAA7',
-    badge: 'COLLECTION'
-  },
-  {
-    id: '5',
-    brand: 'KODA INSIDER',
-    title: 'The Store Tour',
-    subtitle: 'Discover hidden gems across London. Unlock VIP pricing.',
-    image: 'https://images.unsplash.com/photo-1765009433753-c7462637d21f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBmYXNoaW9uJTIwc3RvcmUlMjBpbnRlcmlvciUyMGx1eHVyeXxlbnwxfHx8fDE3Njk3MTcxODV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    location: 'London Wide',
-    storeCount: 25,
-    exclusive: true,
-    color: '#eca0ff',
-    badge: 'INSIDER'
-  }
-];
+function TikTokIcon() {
+  return (
+    <svg width="20" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.98a8.2 8.2 0 0 0 4.78 1.52V7.07a4.85 4.85 0 0 1-1.01-.38z" />
+    </svg>
+  );
+}
 
-export function HomePage({ onAddToCart }: HomePageProps) {
-  const [currentCampaign, setCurrentCampaign] = useState(0);
+export function HomePage({ onStartScanning }: HomePageProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistJoined, setWaitlistJoined] = useState(false);
 
   const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const width = scrollContainerRef.current.clientWidth;
-      const newIndex = Math.round(scrollLeft / width);
-      setCurrentCampaign(newIndex);
-    }
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, clientWidth } = scrollContainerRef.current;
+    setCurrentSlide(Math.round(scrollLeft / clientWidth));
+  };
+
+  const handleJoinWaitlist = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail) return;
+    setWaitlistJoined(true);
+    toast.success('You're on the list!');
   };
 
   return (
-    <div className="h-full bg-white flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shopping in</span>
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-[#51EAA7]" />
-            <span className="text-sm font-bold">Amsterdam, UK</span>
-          </div>
-        </div>
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-          <Zap className="w-5 h-5 text-gray-400" />
-        </div>
+    <div className="h-full bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col">
+
+      {/* Header — H1: arlo. wordmark replaces geo header */}
+      <div className="px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <span className="font-display text-[#651610] text-2xl leading-none">arlo.</span>
+        {/* Notification bell placeholder — H6: colour #651610 */}
+        <button className="w-10 h-10 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center shadow-sm">
+          <Zap className="w-5 h-5 text-[#651610]" />
+        </button>
       </div>
 
-      {/* Hero Swiper */}
-      <div className="relative flex-1">
+      {/* Swipeable slides — H2: same UI pattern, new alpha-intro content */}
+      <div className="relative flex-1 min-h-0">
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className="flex overflow-x-auto snap-x snap-mandatory h-full no-scrollbar"
           style={{ scrollbarWidth: 'none' }}
         >
-          {campaigns.map((campaign) => (
-            <div key={campaign.id} className="min-w-full snap-start relative h-full px-4 pb-4">
-              <div className="relative h-full rounded-[40px] overflow-hidden shadow-xl">
-                <img
-                  src={campaign.image}
-                  alt={campaign.title}
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                
-                {/* Badge */}
-                <div className="absolute top-6 right-6">
-                  <div 
-                    className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-tighter text-white"
-                    style={{ backgroundColor: campaign.color }}
-                  >
-                    {campaign.badge}
-                  </div>
-                </div>
 
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <span className="text-[10px] font-black tracking-widest uppercase opacity-70">
-                    {campaign.brand}
-                  </span>
-                  <h2 className="text-4xl font-black leading-none mb-4 mt-1">
-                    {campaign.title}
-                  </h2>
-                  <p className="text-sm opacity-80 mb-6 font-medium">
-                    {campaign.subtitle}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                        <Store className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-xs font-bold">{campaign.storeCount} Nearby</span>
-                    </div>
-                    
-                    <Button 
-                      className="bg-white text-black hover:bg-white/90 rounded-full px-6 font-bold flex gap-2 items-center"
-                    >
-                      Locate <ArrowRight className="w-4 h-4" />
-                    </Button>
+          {/* ── Slide 1: Welcome ── */}
+          <div className="min-w-full snap-start h-full px-4 pb-4">
+            <div className="relative h-full rounded-[40px] overflow-hidden shadow-xl bg-[#651610] flex flex-col">
+
+              {/* Decorative wave pattern area */}
+              <div className="absolute inset-0 opacity-10">
+                <svg width="100%" height="100%" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+                  <path d="M-50 200 Q100 150 200 200 Q300 250 450 200 Q600 150 700 200 L700 300 Q600 350 450 300 Q300 250 200 300 Q100 350 -50 300Z" fill="#FFC8FF" />
+                  <path d="M-50 400 Q100 350 200 400 Q300 450 450 400 Q600 350 700 400 L700 500 Q600 550 450 500 Q300 450 200 500 Q100 550 -50 500Z" fill="#FFC8FF" />
+                  <path d="M-50 600 Q100 550 200 600 Q300 650 450 600 Q600 550 700 600 L700 700 Q600 750 450 700 Q300 650 200 700 Q100 750 -50 700Z" fill="#FFC8FF" />
+                </svg>
+              </div>
+
+              {/* Badge */}
+              <div className="absolute top-6 right-6 z-10">
+                <div className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-tighter bg-[#FFC8FF] text-[#651610]">
+                  ALPHA
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                <span className="text-[10px] font-black tracking-widest uppercase text-white/60">
+                  arlo.
+                </span>
+                <h2 className="font-display text-white text-5xl leading-none mb-4 mt-2">
+                  welcome to arlo. alpha
+                </h2>
+                <p className="text-sm text-white/80 mb-8 font-medium leading-relaxed max-w-xs">
+                  Walk into any store. Scan garment labels. We ship everything straight to your door — no bags, no queues.
+                </p>
+                <Button
+                  onClick={onStartScanning}
+                  className="bg-white text-[#651610] hover:bg-white/90 rounded-full px-7 font-black flex gap-2 items-center h-12 shadow-lg"
+                >
+                  Start scanning <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Slide 2: Waitlist ── */}
+          <div className="min-w-full snap-start h-full px-4 pb-4">
+            <div className="relative h-full rounded-[40px] overflow-hidden shadow-xl bg-[#FFC8FF] flex flex-col">
+
+              {/* Decorative circles */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#651610]/10" />
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-[#651610]/5" />
+
+              {/* Badge */}
+              <div className="absolute top-6 right-6 z-10">
+                <div className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-tighter bg-[#651610] text-white">
+                  WAITLIST
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                <span className="text-[10px] font-black tracking-widest uppercase text-[#651610]/60">
+                  early access
+                </span>
+                <h2 className="font-display text-[#651610] text-4xl leading-none mb-3 mt-2">
+                  join {WAITLIST_COUNT} others on the waitlist
+                </h2>
+                <p className="text-sm text-[#651610]/70 mb-6 font-medium leading-relaxed">
+                  Be first to shop when arlo. launches in your city.
+                </p>
+
+                {waitlistJoined ? (
+                  <div className="bg-[#651610] rounded-2xl px-6 py-4 text-center">
+                    <p className="text-white font-black text-sm">You're on the list!</p>
+                    <p className="text-white/70 text-xs mt-1">We'll be in touch soon.</p>
                   </div>
+                ) : (
+                  <form onSubmit={handleJoinWaitlist} className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#651610]/40" />
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={waitlistEmail}
+                        onChange={e => setWaitlistEmail(e.target.value)}
+                        required
+                        className="bg-white border-transparent h-12 rounded-2xl pl-9 text-sm shadow-sm placeholder:text-[#651610]/30 text-[#651610]"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-12 rounded-2xl px-5 shadow-lg shadow-[#651610]/20 whitespace-nowrap"
+                    >
+                      Join
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Slide 3: Socials ── */}
+          <div className="min-w-full snap-start h-full px-4 pb-4">
+            <div className="relative h-full rounded-[40px] overflow-hidden shadow-xl bg-[#0F0F0F] flex flex-col">
+
+              {/* Decorative accent */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#651610] via-[#FFC8FF] to-[#651610]" />
+
+              {/* Badge */}
+              <div className="absolute top-6 right-6 z-10">
+                <div className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-tighter bg-[#FFC8FF] text-[#651610]">
+                  FOLLOW US
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                <span className="text-[10px] font-black tracking-widest uppercase text-white/40">
+                  stay updated
+                </span>
+                <h2 className="font-display text-white text-4xl leading-none mb-3 mt-2">
+                  follow us for updates
+                </h2>
+                <p className="text-sm text-white/60 mb-8 font-medium leading-relaxed">
+                  Drops, news, and early access — first on our socials.
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  {/* TODO: replace href="#" with real Instagram URL (PL3) */}
+                  <a
+                    href="#"
+                    className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-4 hover:bg-white/15 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center text-white">
+                      <InstagramIcon />
+                    </div>
+                    <div>
+                      <p className="text-white font-black text-sm">Instagram</p>
+                      <p className="text-white/50 text-xs">@arlo.shop</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-white/30 ml-auto" />
+                  </a>
+
+                  {/* TODO: replace href="#" with real TikTok URL (PL4) */}
+                  <a
+                    href="#"
+                    className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-4 hover:bg-white/15 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#010101] border border-white/10 flex items-center justify-center text-white">
+                      <TikTokIcon />
+                    </div>
+                    <div>
+                      <p className="text-white font-black text-sm">TikTok</p>
+                      <p className="text-white/50 text-xs">@arlo.shop</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-white/30 ml-auto" />
+                  </a>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+
         </div>
 
-        {/* Page Indicators */}
-        <div className="absolute bottom-10 left-12 flex gap-1.5 pointer-events-none">
-          {campaigns.map((_, index) => (
+        {/* Slide indicators */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+          {[0, 1, 2].map(i => (
             <div
-              key={index}
-              className={`h-1 rounded-full transition-all duration-300 ${
-                index === currentCampaign
-                  ? 'w-8 bg-white'
-                  : 'w-2 bg-white/30'
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === currentSlide ? 'w-6 bg-[#651610]' : 'w-1.5 bg-[#651610]/25'
               }`}
             />
           ))}
