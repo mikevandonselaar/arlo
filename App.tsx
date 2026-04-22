@@ -37,11 +37,11 @@ export default function App() {
   };
 
   if (state === 'loading') {
-    return <div className="min-h-screen bg-white" />;
+    return <div className="min-h-screen bg-[--arlo-bg]" />;
   }
 
   return (
-    <div className="min-h-screen bg-white selection:bg-[#51EAA7]/30">
+    <div className="min-h-screen bg-[--arlo-bg] selection:bg-[#FFC8FF]/50">
       {state === 'app' ? (
         <MainApp onSignOut={handleSignOut} />
       ) : (
