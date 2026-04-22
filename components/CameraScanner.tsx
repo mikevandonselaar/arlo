@@ -8,10 +8,19 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeLabelImage } from '../lib/vision';
 
+// S4: Ordered 3-photo flow — recommended but not enforced
+const PHOTO_STEPS = [
+  { label: 'GARMENT',  instruction: 'Take a photo of the garment',         phase: 'GARMENT PHOTO' },
+  { label: 'EAN CODE', instruction: 'Take a photo of the EAN / barcode',    phase: 'EAN CODE PHOTO' },
+  { label: 'LABEL',    instruction: 'Take a photo of the label / brand tag', phase: 'LABEL PHOTO' },
+] as const;
+
+const MAX_PHOTOS = PHOTO_STEPS.length;
+
 interface EditState {
   name: string;
   brand: string;
-  price: string;   // string so the input is freely editable
+  price: string;
   size: string;
   color: string;
   ean: string;
@@ -23,22 +32,18 @@ interface CameraScannerProps {
 }
 
 export function CameraScanner({ onAddToCart }: CameraScannerProps) {
-  const [isScanning, setIsScanning] = useState(false);
+  const [isScanning, setIsScanning]         = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalyzing, setIsAnalyzing]       = useState(false);
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
-  const [editState, setEditState] = useState<EditState | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [editState, setEditState]           = useState<EditState | null>(null);
+  const videoRef  = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Start / stop the camera stream whenever isScanning toggles
   useEffect(() => {
     if (!isScanning) return;
-
     navigator.mediaDevices
-      .getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-      })
+      .getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } })
       .then(stream => {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
@@ -47,7 +52,6 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         toast.error('Camera access denied');
         setIsScanning(false);
       });
-
     return () => {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -63,16 +67,14 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
     setEditState(null);
   };
 
-  // Grab the current video frame and store it as a JPEG data URL
   const capturePhoto = () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || capturedPhotos.length >= MAX_PHOTOS) return;
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1280;
+    canvas.width  = video.videoWidth  || 1280;
     canvas.height = video.videoHeight || 720;
     canvas.getContext('2d')!.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    setCapturedPhotos(prev => [...prev, dataUrl]);
+    setCapturedPhotos(prev => [...prev, canvas.toDataURL('image/jpeg', 0.85)]);
   };
 
   const removePhoto = (index: number) => {
@@ -82,30 +84,29 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
   const handleAnalyse = async () => {
     if (capturedPhotos.length === 0) return;
     setIsAnalyzing(true);
-
     try {
       const extraction = await analyzeLabelImage(capturedPhotos);
       const product: Product = {
-        id: extraction.ean ?? `scan-${Date.now()}`,
-        name: extraction.name,
-        price: extraction.price ?? 0,
-        brand: extraction.brand,
-        category: extraction.category,
-        image: capturedPhotos[0],        // first photo becomes the cart thumbnail
-        ean: extraction.ean ?? undefined,
-        size: extraction.size ?? undefined,
-        color: extraction.color ?? undefined,
+        id:        extraction.ean ?? `scan-${Date.now()}`,
+        name:      extraction.name,
+        price:     extraction.price ?? 0,
+        brand:     extraction.brand,
+        category:  extraction.category,
+        image:     capturedPhotos[0], // S4: garment photo (index 0) → cart thumbnail (B4)
+        ean:       extraction.ean ?? undefined,
+        size:      extraction.size ?? undefined,
+        color:     extraction.color ?? undefined,
         scannedAt: 'In-Store Scan',
         shippedBy: extraction.brand,
       };
       setScannedProduct(product);
       setEditState({
-        name: product.name,
-        brand: product.brand,
-        price: product.price > 0 ? product.price.toFixed(2) : '',
-        size: product.size ?? '',
-        color: product.color ?? '',
-        ean: product.ean ?? '',
+        name:      product.name,
+        brand:     product.brand,
+        price:     product.price > 0 ? product.price.toFixed(2) : '',
+        size:      product.size  ?? '',
+        color:     product.color ?? '',
+        ean:       product.ean   ?? '',
         scannedAt: product.scannedAt ?? 'In-Store Scan',
       });
     } catch {
@@ -117,20 +118,19 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
   const handleConfirm = () => {
     if (!scannedProduct || !editState) return;
-    const parsedPrice = parseFloat(editState.price);
-    const eanTrimmed = editState.ean.trim() || undefined;
+    const parsedPrice  = parseFloat(editState.price);
+    const eanTrimmed   = editState.ean.trim() || undefined;
     onAddToCart({
       ...scannedProduct,
-      name: editState.name.trim() || scannedProduct.name,
-      brand: editState.brand.trim() || scannedProduct.brand,
-      price: isNaN(parsedPrice) ? scannedProduct.price : parsedPrice,
-      size: editState.size.trim() || undefined,
-      color: editState.color.trim() || undefined,
-      ean: eanTrimmed,
-      // Update the product id if user corrected the EAN
-      id: eanTrimmed ?? scannedProduct.id,
+      name:      editState.name.trim()      || scannedProduct.name,
+      brand:     editState.brand.trim()     || scannedProduct.brand,
+      price:     isNaN(parsedPrice) ? scannedProduct.price : parsedPrice,
+      size:      editState.size.trim()      || undefined,
+      color:     editState.color.trim()     || undefined,
+      ean:       eanTrimmed,
+      id:        eanTrimmed ?? scannedProduct.id,
       scannedAt: editState.scannedAt.trim() || scannedProduct.scannedAt,
-      shippedBy: editState.brand.trim() || scannedProduct.brand,
+      shippedBy: editState.brand.trim()     || scannedProduct.brand,
     });
     setScannedProduct(null);
     setEditState(null);
@@ -143,41 +143,49 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
     setCapturedPhotos([]);
   };
 
-  const phaseLabel =
-    capturedPhotos.length === 0
-      ? 'FRONT LABEL'
-      : capturedPhotos.length === 1
-      ? 'BACK LABEL (OPTIONAL)'
-      : 'READY TO ANALYSE';
+  // Derive current step labels from photo count
+  const nextStep   = PHOTO_STEPS[capturedPhotos.length];
+  const phaseLabel = capturedPhotos.length >= MAX_PHOTOS
+    ? 'READY TO ANALYSE'
+    : nextStep?.phase ?? 'READY TO ANALYSE';
+
+  // Price validation for the confirm button (A3 — applied here too for consistency)
+  const priceValue   = parseFloat(editState?.price ?? '');
+  const priceInvalid = !editState?.price || isNaN(priceValue) || priceValue <= 0;
 
   return (
     <div className="relative h-full bg-black overflow-hidden">
 
       {/* ── Idle screen ── */}
       {!isScanning ? (
-        <div className="h-full flex flex-col items-center justify-center p-8 text-white">
+        <div className="h-full flex flex-col items-center justify-center p-8 text-white bg-[#0F0F0F]">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-32 h-32 bg-[#51EAA7]/10 rounded-full flex items-center justify-center mb-8 border border-[#51EAA7]/30"
+            className="w-32 h-32 bg-[#651610]/10 rounded-full flex items-center justify-center mb-8 border border-[#651610]/30"
           >
-            <Camera className="w-16 h-16 text-[#51EAA7]" />
+            <Camera className="w-16 h-16 text-[#651610]" />
           </motion.div>
 
-          <h2 className="text-3xl font-black mb-4">Scan Label</h2>
-          <p className="text-gray-400 text-center mb-12 max-w-xs leading-relaxed">
-            Photograph the clothing label to instantly identify the product and extract details.
+          {/* S1: title */}
+          <h2 className="font-display text-3xl mb-4">scan garment</h2>
+
+          {/* S2: instruction text */}
+          <p className="text-gray-400 text-center mb-12 max-w-xs leading-relaxed text-sm">
+            Follow the instructions after opening your camera.
           </p>
 
+          {/* S3: Start button */}
           <Button
             onClick={() => setIsScanning(true)}
-            className="bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black w-full h-14 rounded-2xl mb-4 text-lg"
+            className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black w-full h-14 rounded-2xl mb-4 text-lg"
           >
             Start Camera
           </Button>
 
+          {/* S3: updated subtitle */}
           <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">
-            Point at the clothing label
+            Point at the garment
           </p>
         </div>
 
@@ -208,44 +216,47 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                 {phaseLabel}
               </span>
 
-              {/* Torch placeholder — wired to torch API in a real device build */}
               <button className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white">
                 <Flashlight className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Label guide frame */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-56 h-72 relative">
-                <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#51EAA7] rounded-tl-2xl" />
-                <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#51EAA7] rounded-tr-2xl" />
-                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-[#51EAA7] rounded-bl-2xl" />
-                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-[#51EAA7] rounded-br-2xl" />
+            {/* S4: Per-photo instruction overlay + scan frame */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              {/* Instruction text for the current step */}
+              {!isAnalyzing && nextStep && capturedPhotos.length < MAX_PHOTOS && (
+                <p className="text-white text-xs font-bold tracking-wide px-6 py-2 bg-black/40 backdrop-blur-md rounded-full">
+                  {nextStep.instruction}
+                </p>
+              )}
 
+              {/* S7: Scan frame — #FFC8FF corners */}
+              <div className="w-56 h-72 relative">
+                <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#FFC8FF] rounded-tl-2xl" />
+                <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#FFC8FF] rounded-tr-2xl" />
+                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-[#FFC8FF] rounded-bl-2xl" />
+                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-[#FFC8FF] rounded-br-2xl" />
                 {isAnalyzing && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="w-10 h-10 text-[#51EAA7] animate-spin" />
+                    <Loader2 className="w-10 h-10 text-[#FFC8FF] animate-spin" />
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Footer — three states */}
+            {/* Footer */}
             {isAnalyzing ? (
 
               <div className="p-8 pb-12 flex flex-col items-center gap-3 z-20">
                 <p className="text-white font-bold tracking-widest uppercase text-xs opacity-80">
-                  Analysing label…
+                  Analysing garment…
                 </p>
               </div>
 
             ) : capturedPhotos.length === 0 ? (
 
-              /* No photos yet — shutter button */
+              /* No photos yet — shutter */
               <div className="p-8 pb-12 flex flex-col items-center gap-6 z-20">
-                <p className="text-white font-bold tracking-widest uppercase text-xs opacity-80">
-                  Position Label in Frame
-                </p>
                 <button
                   onClick={capturePhoto}
                   className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
@@ -260,14 +271,14 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               /* Photos captured — thumbnails + actions */
               <div className="p-6 pb-10 z-20 flex flex-col gap-4">
                 <div className="flex gap-3 items-end">
+                  {/* Captured photo thumbnails */}
                   {capturedPhotos.map((photo, i) => (
                     <div key={i} className="relative">
                       <img
                         src={photo}
-                        alt={i === 0 ? 'Front label' : 'Back label'}
-                        className="w-16 h-20 object-cover rounded-xl border-2 border-[#51EAA7]"
+                        alt={PHOTO_STEPS[i]?.label ?? `Photo ${i + 1}`}
+                        className="w-16 h-20 object-cover rounded-xl border-2 border-[#FFC8FF]"
                       />
-                      {/* Remove button */}
                       <button
                         onClick={() => removePhoto(i)}
                         className="absolute -top-2 -right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center border border-white/30"
@@ -275,31 +286,35 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                       >
                         <X className="w-3 h-3 text-white" />
                       </button>
-                      <span className="absolute bottom-1 left-1 text-[8px] font-black text-white bg-black/50 px-1 rounded">
-                        {i === 0 ? 'FRONT' : 'BACK'}
+                      {/* S5: updated photo labels */}
+                      <span className="absolute bottom-1 left-1 text-[8px] font-black text-white bg-black/60 px-1 rounded">
+                        {PHOTO_STEPS[i]?.label ?? `PHOTO ${i + 1}`}
                       </span>
                     </div>
                   ))}
 
-                  {/* Add-back-label slot */}
-                  {capturedPhotos.length < 2 && (
+                  {/* Next photo slot — shows if under max and there's a defined step */}
+                  {capturedPhotos.length < MAX_PHOTOS && (
                     <button
                       onClick={capturePhoto}
                       className="w-16 h-20 rounded-xl border-2 border-dashed border-white/30 flex flex-col items-center justify-center gap-1 text-white/50 active:scale-95 transition-transform"
-                      aria-label="Add back label photo"
+                      aria-label={`Add ${nextStep?.label ?? 'photo'}`}
                     >
                       <Camera className="w-5 h-5" />
-                      <span className="text-[8px] font-bold">+ BACK</span>
+                      <span className="text-[8px] font-bold">
+                        + {nextStep?.label ?? 'PHOTO'}
+                      </span>
                     </button>
                   )}
                 </div>
 
+                {/* S6: "Analyse Garment" button */}
                 <Button
                   onClick={handleAnalyse}
-                  className="bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black h-14 rounded-2xl text-base flex items-center justify-center gap-2"
+                  className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-5 h-5" />
-                  Analyse Label
+                  Analyse Garment
                 </Button>
               </div>
             )}
@@ -307,7 +322,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         </>
       )}
 
-      {/* ── Result drawer (editable) ── */}
+      {/* ── Result drawer (editable) — Section 4 / A-series changes applied here ── */}
       <AnimatePresence>
         {scannedProduct && editState && (
           <motion.div
@@ -315,30 +330,25 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[40px] z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[90%] flex flex-col"
+            className="absolute inset-x-0 bottom-0 bg-white dark:bg-[#1A1A1A] rounded-t-[40px] z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[90%] flex flex-col"
           >
-            {/* Drag handle */}
             <div className="pt-5 pb-2 flex-shrink-0">
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto" />
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto" />
             </div>
 
-            {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4 space-y-5">
 
-              {/* Photo strip + header */}
+              {/* A1: "GARMENT DETAILS" label */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
-                  <img
-                    src={scannedProduct.image}
-                    alt="Label"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-[#2A2A2A] rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
+                  <img src={scannedProduct.image} alt="Garment" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-[#51EAA7] uppercase tracking-widest mb-0.5">
-                    Label details
+                  <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest mb-0.5">
+                    Garment Details
                   </p>
-                  <p className="text-xs text-gray-400 leading-snug">
+                  {/* A2: prominent subtitle */}
+                  <p className="text-xs font-black text-[#651610] leading-snug">
                     Correct anything before adding to bag.
                   </p>
                 </div>
@@ -346,107 +356,107 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
               {/* Name */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                  Product Name
-                </Label>
+                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Product Name</Label>
                 <Input
                   value={editState.name}
                   onChange={e => setEditState(s => s && ({ ...s, name: e.target.value }))}
-                  className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                 />
               </div>
 
               {/* Brand */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                  Brand
-                </Label>
+                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Brand</Label>
                 <Input
                   value={editState.brand}
                   onChange={e => setEditState(s => s && ({ ...s, brand: e.target.value }))}
-                  className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                 />
               </div>
 
-              {/* Price + Size (side by side) */}
+              {/* Price + Size */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                    Price (£)
+                  {/* A3: price warning label when empty/zero */}
+                  <Label className={`font-bold text-[10px] uppercase tracking-widest ml-1 ${priceInvalid ? 'text-[#651610]' : 'text-gray-500'}`}>
+                    {priceInvalid ? '⚠ Price required' : 'Price (£)'}
                   </Label>
+                  {/* A3: red border when price is empty/zero */}
                   <Input
                     type="number"
                     inputMode="decimal"
                     placeholder="0.00"
                     value={editState.price}
                     onChange={e => setEditState(s => s && ({ ...s, price: e.target.value }))}
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                    className={`h-12 rounded-2xl shadow-none bg-[#EDF0F5] dark:bg-[#2A2A2A] text-gray-900 dark:text-white ${
+                      priceInvalid
+                        ? 'border-2 border-[#651610]'
+                        : 'border-transparent'
+                    }`}
                   />
+                  {priceInvalid && (
+                    <p className="text-[9px] font-bold text-[#651610] ml-1">Please check and fill in the price</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                    Size
-                  </Label>
+                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Size</Label>
                   <Input
                     placeholder="e.g. M"
                     value={editState.size}
                     onChange={e => setEditState(s => s && ({ ...s, size: e.target.value }))}
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                   />
                 </div>
               </div>
 
-              {/* Color + EAN (side by side) */}
+              {/* Color + EAN */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                    Colour
-                  </Label>
+                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Colour</Label>
                   <Input
                     placeholder="e.g. Black"
                     value={editState.color}
                     onChange={e => setEditState(s => s && ({ ...s, color: e.target.value }))}
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                    EAN / Barcode
-                  </Label>
+                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">EAN / Barcode</Label>
                   <Input
                     placeholder="e.g. 1234567890123"
                     value={editState.ean}
                     onChange={e => setEditState(s => s && ({ ...s, ean: e.target.value }))}
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                   />
                 </div>
               </div>
 
               {/* Store name */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
-                  Store Name
-                </Label>
+                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Store Name</Label>
                 <Input
                   placeholder="e.g. Nike, Oxford St"
                   value={editState.scannedAt}
                   onChange={e => setEditState(s => s && ({ ...s, scannedAt: e.target.value }))}
-                  className="bg-[#F5F5F7] border-transparent text-gray-900 h-12 rounded-2xl shadow-none"
+                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
                 />
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 pt-1">
+                {/* A6: Cancel — outline #651610 */}
                 <Button
                   variant="outline"
                   onClick={handleCancelProduct}
-                  className="flex-1 h-14 rounded-2xl border-gray-200 text-gray-900 font-bold"
+                  className="flex-1 h-14 rounded-2xl border-2 border-[#651610] text-[#651610] font-bold bg-transparent hover:bg-[#651610]/5"
                 >
                   Cancel
                 </Button>
+                {/* A3/A5: disabled when price invalid */}
                 <Button
                   onClick={handleConfirm}
-                  className="flex-[2] h-14 rounded-2xl bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black"
+                  disabled={priceInvalid}
+                  className="flex-[2] h-14 rounded-2xl bg-[#651610] hover:bg-[#7d1e17] text-white font-black disabled:bg-[#CCCCCC] disabled:cursor-not-allowed"
                 >
                   Looks good →
                 </Button>
