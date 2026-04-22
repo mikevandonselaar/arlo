@@ -6,7 +6,23 @@ import { Label } from './ui/label';
 import { Product } from './MainApp';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
-import { analyzeLabelImage } from '../lib/vision';
+import { analyzeLabelImage, LabelExtraction } from '../lib/vision';
+
+// ── Dev mock ─────────────────────────────────────────────────────────────────
+// Set DEV_MOCK_SCAN = false once real API keys (VITE_OPENAI_API_KEY /
+// VITE_ANTHROPIC_API_KEY) are configured in .env
+const DEV_MOCK_SCAN = true;
+
+const MOCK_EXTRACTION: LabelExtraction = {
+  ean:      '4066748396942',
+  brand:    'Adidas',
+  name:     'Yeezy Boost 350 V2',
+  price:    120.00,
+  category: 'Footwear',
+  size:     '42',
+  color:    'Core Black',
+  material: '100% Primeknit upper',
+};
 
 // S4: Ordered 3-photo flow — recommended but not enforced
 const PHOTO_STEPS = [
@@ -82,10 +98,13 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
   };
 
   const handleAnalyse = async () => {
-    if (capturedPhotos.length === 0) return;
+    if (!DEV_MOCK_SCAN && capturedPhotos.length === 0) return;
     setIsAnalyzing(true);
     try {
-      const extraction = await analyzeLabelImage(capturedPhotos);
+      // In dev mock mode: skip the API, return hardcoded data after a short delay
+      const extraction: LabelExtraction = DEV_MOCK_SCAN
+        ? await new Promise(resolve => setTimeout(() => resolve(MOCK_EXTRACTION), 900))
+        : await analyzeLabelImage(capturedPhotos);
       const product: Product = {
         id:        extraction.ean ?? `scan-${Date.now()}`,
         name:      extraction.name,
@@ -161,6 +180,14 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
       {/* ── Idle screen ── */}
       {!isScanning ? (
         <div className="h-full flex flex-col items-center justify-center p-8 text-white bg-[#0F0F0F]">
+
+          {/* DEV MODE badge */}
+          {DEV_MOCK_SCAN && (
+            <div className="absolute top-6 right-6 bg-[#FFC8FF] text-[#651610] text-[9px] font-black px-3 py-1 rounded-full tracking-widest uppercase">
+              DEV MOCK
+            </div>
+          )}
+
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -174,21 +201,37 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
           {/* S2: instruction text */}
           <p className="text-gray-400 text-center mb-12 max-w-xs leading-relaxed text-sm">
-            Follow the instructions after opening your camera.
+            {DEV_MOCK_SCAN
+              ? 'Dev mode active — returns mock Adidas Yeezy data instantly.'
+              : 'Follow the instructions after opening your camera.'}
           </p>
 
           {/* S3: Start button */}
           <Button
             onClick={() => setIsScanning(true)}
-            className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black w-full h-14 rounded-2xl mb-4 text-lg"
+            className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black w-full h-14 rounded-2xl mb-3 text-lg"
           >
             Start Camera
           </Button>
 
+          {/* DEV shortcut — skip camera entirely */}
+          {DEV_MOCK_SCAN && (
+            <Button
+              onClick={handleAnalyse}
+              variant="outline"
+              className="w-full h-12 rounded-2xl border-2 border-[#FFC8FF] text-[#FFC8FF] font-black text-sm bg-transparent hover:bg-[#FFC8FF]/10 flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Skip camera — use mock data
+            </Button>
+          )}
+
           {/* S3: updated subtitle */}
-          <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">
-            Point at the garment
-          </p>
+          {!DEV_MOCK_SCAN && (
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mt-4">
+              Point at the garment
+            </p>
+          )}
         </div>
 
       ) : (
@@ -257,8 +300,8 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
             ) : capturedPhotos.length === 0 ? (
 
-              /* No photos yet — shutter */
-              <div className="p-8 pb-12 flex flex-col items-center gap-6 z-20">
+              /* No photos yet — shutter (+ mock shortcut inside camera) */
+              <div className="p-8 pb-12 flex flex-col items-center gap-4 z-20">
                 <button
                   onClick={capturePhoto}
                   className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
@@ -266,6 +309,14 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                 >
                   <div className="w-14 h-14 rounded-full bg-white" />
                 </button>
+                {DEV_MOCK_SCAN && (
+                  <button
+                    onClick={handleAnalyse}
+                    className="flex items-center gap-1.5 text-[#FFC8FF] text-xs font-black tracking-widest uppercase"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Use mock data
+                  </button>
+                )}
               </div>
 
             ) : (
