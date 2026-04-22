@@ -4,11 +4,10 @@ import { MainApp } from './components/MainApp';
 import { getSessionProfile } from './lib/auth';
 
 type AppState =
-  | 'loading'         // checking localStorage / Supabase on first render
-  | 'pick-username'   // has a session (e.g. post-Google-OAuth) but no profile yet
-  | 'sign-in'         // no session — returning user needs to authenticate
-  | 'new-user'        // no session, no stored username — show username picker
-  | 'app';            // fully authenticated with a profile
+  | 'loading'        // checking Supabase session on first render
+  | 'auth'           // no session — show sign-in / sign-up screens
+  | 'pick-username'  // has session (e.g. post-Google-OAuth) but no profile yet
+  | 'app';           // fully authenticated with a profile
 
 export default function App() {
   const [state, setState] = useState<AppState>('loading');
@@ -16,13 +15,10 @@ export default function App() {
   useEffect(() => {
     getSessionProfile().then(profile => {
       if (!profile) {
-        // No active session — decide which sign-in step to open
-        const stored = localStorage.getItem('arlo-username');
-        setState(stored ? 'sign-in' : 'new-user');
+        setState('auth');
         return;
       }
       if (!profile.username) {
-        // Session exists (e.g. just came back from Google OAuth) but no profile yet
         setState('pick-username');
         return;
       }
@@ -31,10 +27,7 @@ export default function App() {
   }, []);
 
   const handleSignIn = () => setState('app');
-  const handleSignOut = () => {
-    localStorage.removeItem('arlo-username');
-    setState('new-user');
-  };
+  const handleSignOut = () => setState('auth');
 
   if (state === 'loading') {
     return <div className="min-h-screen bg-[--arlo-bg]" />;
@@ -47,7 +40,7 @@ export default function App() {
       ) : (
         <SignInScreen
           onSignIn={handleSignIn}
-          initialStep={state === 'sign-in' ? 'sign-in' : 'pick-username'}
+          initialStep={state === 'pick-username' ? 'signup-username' : 'landing'}
           hasExistingSession={state === 'pick-username'}
         />
       )}

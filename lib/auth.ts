@@ -36,27 +36,24 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   return data === null;
 }
 
-// ─── Account creation (first launch) ─────────────────────────────────────────
+// ─── Account creation ─────────────────────────────────────────────────────────
 
 /**
- * Creates a new anonymous Supabase session, inserts a profile row with the
- * chosen username, and caches the username in localStorage.
- * Called when there is no existing session (brand-new user).
+ * Creates a new account with email + password.
+ * After this call the user has an active session (email may be unconfirmed
+ * depending on Supabase project settings).
+ */
+export async function signUpWithEmail(email: string, password: string): Promise<void> {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error || !data.user) throw new Error(error?.message ?? 'Sign-up failed');
+}
+
+/**
+ * @deprecated — anonymous accounts removed in alpha. Use signUpWithEmail instead.
+ * Kept so the build doesn't break if anything still imports it.
  */
 export async function createAccountWithUsername(username: string): Promise<void> {
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error || !data.user) throw new Error(`Sign-in failed: ${error?.message}`);
-
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .insert({ id: data.user.id, username });
-
-  if (profileError) {
-    await supabase.auth.signOut();
-    throw new Error(`Could not save username: ${profileError.message}`);
-  }
-
-  setStoredUsername(username);
+  return addUsernameToExistingSession(username);
 }
 
 /**

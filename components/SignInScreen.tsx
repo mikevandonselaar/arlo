@@ -2,31 +2,27 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Loader2, Check, X } from 'lucide-react';
+import { Loader2, Check, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import kodaLogo from '../assets/889e0f89ea9f9c4f1bed9fb0d641b7ce6702968e.png';
 import {
   USERNAME_REGEX,
   isUsernameAvailable,
-  createAccountWithUsername,
+  signUpWithEmail,
   addUsernameToExistingSession,
   signInWithEmail,
   signInWithGoogle,
-  getStoredUsername,
 } from '../lib/auth';
+
+export type SignInStep = 'landing' | 'signup-email' | 'signup-username' | 'signin';
+type UsernameStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken';
 
 interface SignInScreenProps {
   onSignIn: () => void;
-  /** Which step to open on first render. Defaults to 'pick-username'. */
-  initialStep?: 'pick-username' | 'sign-in';
-  /** True when the user already has a Supabase session (e.g. post-Google-OAuth)
-   *  but hasn't created a profile yet. Skips session creation in username step. */
+  initialStep?: SignInStep;
+  /** True when user already has a Supabase session (e.g. post-Google-OAuth) but no profile yet. */
   hasExistingSession?: boolean;
 }
-
-type UsernameStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken';
 
 function GoogleIcon() {
   return (
@@ -39,46 +35,65 @@ function GoogleIcon() {
   );
 }
 
+const slideIn = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0 },
+  exit:    { opacity: 0, x: -24 },
+  transition: { duration: 0.22 },
+};
+
 export function SignInScreen({
   onSignIn,
-  initialStep = 'pick-username',
+  initialStep = 'landing',
   hasExistingSession = false,
 }: SignInScreenProps) {
-  const [step, setStep] = useState<'pick-username' | 'sign-in'>(initialStep);
+  const [step, setStep] = useState<SignInStep>(initialStep);
 
-  // ── Username picker state ──
-  const [username, setUsername] = useState('');
+  // Sign-up credentials state
+  const [signupEmail, setSignupEmail]       = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+
+  // Username state
+  const [username, setUsername]             = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Sign-in form state ──
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Sign-in state
+  const [signinEmail, setSigninEmail]       = useState('');
+  const [signinPassword, setSigninPassword] = useState('');
 
-  // ── Shared ──
   const [loading, setLoading] = useState(false);
 
-  const storedUsername = getStoredUsername();
-
-  // Real-time username availability check (debounced 400 ms)
+  // Username availability — debounced 400 ms
   useEffect(() => {
     if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
-
     if (!username) { setUsernameStatus('idle'); return; }
     if (!USERNAME_REGEX.test(username)) { setUsernameStatus('invalid'); return; }
-
     setUsernameStatus('checking');
     checkTimerRef.current = setTimeout(async () => {
       const available = await isUsernameAvailable(username);
       setUsernameStatus(available ? 'available' : 'taken');
     }, 400);
-
     return () => { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); };
   }, [username]);
 
   const handleUsernameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Enforce lowercase + strip disallowed characters as the user types
     setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+  };
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleSignupEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await signUpWithEmail(signupEmail, signupPassword);
+      setStep('signup-username');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not create account');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePickUsername = async (e: React.FormEvent) => {
@@ -86,14 +101,10 @@ export function SignInScreen({
     if (usernameStatus !== 'available' || loading) return;
     setLoading(true);
     try {
-      if (hasExistingSession) {
-        await addUsernameToExistingSession(username);
-      } else {
-        await createAccountWithUsername(username);
-      }
+      await addUsernameToExistingSession(username);
       onSignIn();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Could not save username');
     } finally {
       setLoading(false);
     }
@@ -103,7 +114,7 @@ export function SignInScreen({
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmail(email, password);
+      await signInWithEmail(signinEmail, signinPassword);
       onSignIn();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Incorrect email or password');
@@ -116,14 +127,14 @@ export function SignInScreen({
     setLoading(true);
     try {
       await signInWithGoogle();
-      // signInWithGoogle redirects — we never reach the line below
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
       setLoading(false);
     }
   };
 
-  // ── Username status helpers ──
+  // ── Username status copy ───────────────────────────────────────────────────
+
   const usernameHintText: Record<UsernameStatus, string> = {
     idle:      '3–20 chars · letters, numbers, underscores',
     invalid:   '3–20 chars · letters, numbers, underscores only',
@@ -135,201 +146,300 @@ export function SignInScreen({
     idle:      'text-gray-400',
     invalid:   'text-orange-400',
     checking:  'text-gray-400',
-    available: 'text-[#51EAA7]',
+    available: 'text-[#651610]',
     taken:     'text-red-400',
   };
 
-  // ── Shared logo section ──
-  const LogoSection = () => (
-    <div className="flex flex-col items-center mb-12">
-      <div className="w-56 mb-8 transform -rotate-2">
-        <ImageWithFallback src={kodaLogo} alt="KODA" className="w-full h-auto object-contain" />
-      </div>
-      <div className="flex gap-2 mb-4">
-        <div className="w-2 h-2 rounded-full bg-[#51EAA7]" />
-        <div className="w-2 h-2 rounded-full bg-[#aab2ff]" />
-        <div className="w-2 h-2 rounded-full bg-[#eca0ff]" />
-      </div>
-      <p className="text-gray-400 text-center text-[10px] font-black tracking-[0.2em] uppercase">
-        In-Store Shopping Redefined
-      </p>
+  // ── Shared sub-components ─────────────────────────────────────────────────
+
+  const BackButton = ({ to }: { to: SignInStep }) => (
+    <button
+      type="button"
+      onClick={() => setStep(to)}
+      className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors mb-6"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      Back
+    </button>
+  );
+
+  const OrDivider = () => (
+    <div className="relative flex items-center gap-3">
+      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">or</span>
+      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
     </div>
   );
 
-  // ── Google button ──
   const GoogleButton = () => (
     <button
       type="button"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="w-full bg-white border border-gray-200 h-14 rounded-2xl flex items-center justify-center gap-3 font-bold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm"
+      className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-700 h-14 rounded-2xl flex items-center justify-center gap-3 font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors disabled:opacity-50 text-sm"
     >
       <GoogleIcon />
       Continue with Google
     </button>
   );
 
-  // ── Divider ──
-  const OrDivider = () => (
-    <div className="relative flex items-center gap-3">
-      <div className="flex-1 h-px bg-gray-200" />
-      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">or</span>
-      <div className="flex-1 h-px bg-gray-200" />
+  // ── Logo section (shared across all steps) ────────────────────────────────
+
+  const LogoSection = ({ compact = false }: { compact?: boolean }) => (
+    <div className={`flex flex-col items-center ${compact ? 'mb-8' : 'mb-12'}`}>
+      {/* Pink logo card — placeholder for arlo character mascot */}
+      <div className={`bg-[#FFC8FF] rounded-[32px] flex items-center justify-center ${compact ? 'w-20 h-20 mb-5' : 'w-32 h-32 mb-8'}`}>
+        {/* ARLO character mascot comes here — replace this text when asset is ready */}
+        <span
+          className="font-display text-[#651610] select-none"
+          style={{ fontSize: compact ? '2rem' : '3rem', lineHeight: 1 }}
+        >
+          a.
+        </span>
+      </div>
+      {!compact && (
+        <>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-[0.2em] uppercase">
+            Shop now. Carry never.
+          </p>
+        </>
+      )}
     </div>
   );
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col items-center justify-center p-6 font-sans">
       <div className="w-full max-w-md">
-        <LogoSection />
 
         <AnimatePresence mode="wait">
 
-          {/* ── Step: pick-username ── */}
-          {step === 'pick-username' && (
-            <motion.form
-              key="pick-username"
-              onSubmit={handlePickUsername}
-              initial={{ opacity: 0, x: -24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 24 }}
-              transition={{ duration: 0.2 }}
-              className="bg-[#F5F5F7] rounded-[40px] p-10 space-y-6 shadow-sm border border-gray-100"
-            >
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black text-gray-900">Choose your username</h2>
-                <p className="text-sm text-gray-400">No email required. Add one later to secure your account.</p>
-              </div>
+          {/* ── Landing ── */}
+          {step === 'landing' && (
+            <motion.div key="landing" {...slideIn}>
+              <LogoSection />
 
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
-                  Username
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black select-none">@</span>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="yourname"
-                    value={username}
-                    onChange={handleUsernameInput}
-                    maxLength={20}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    className="bg-white border-transparent text-gray-900 placeholder:text-gray-300 h-14 rounded-2xl pl-8 pr-10 shadow-none"
-                  />
-                  {/* Status icon */}
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2">
-                    {usernameStatus === 'checking' && (
-                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                    )}
-                    {usernameStatus === 'available' && (
-                      <Check className="w-4 h-4 text-[#51EAA7]" />
-                    )}
-                    {usernameStatus === 'taken' && (
-                      <X className="w-4 h-4 text-red-400" />
-                    )}
-                  </span>
-                </div>
-                <p className={`text-[10px] ml-1 font-medium ${usernameHintColour[usernameStatus]}`}>
-                  {usernameHintText[usernameStatus]}
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={usernameStatus !== 'available' || loading}
-                className="w-full bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black h-16 rounded-2xl transition-all active:scale-[0.98] text-lg shadow-lg shadow-[#51EAA7]/20 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Claim Username'}
-              </Button>
-
-              <OrDivider />
-              <GoogleButton />
-
-              <div className="text-center text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setStep('sign-in')}
-                  className="text-[#aab2ff] font-black hover:underline"
+              <div className="space-y-3">
+                <Button
+                  onClick={() => setStep('signup-email')}
+                  className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base shadow-lg shadow-[#651610]/20"
                 >
-                  Sign in
-                </button>
-              </div>
-            </motion.form>
-          )}
-
-          {/* ── Step: sign-in ── */}
-          {step === 'sign-in' && (
-            <motion.div
-              key="sign-in"
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.2 }}
-              className="bg-[#F5F5F7] rounded-[40px] p-10 space-y-6 shadow-sm border border-gray-100"
-            >
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black text-gray-900">
-                  {storedUsername ? `Welcome back, @${storedUsername}` : 'Welcome back'}
-                </h2>
-                <p className="text-sm text-gray-400">Sign in to continue your arlo.</p>
-              </div>
-
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    className="bg-white border-transparent text-gray-900 placeholder:text-gray-300 h-14 rounded-2xl shadow-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    className="bg-white border-transparent text-gray-900 placeholder:text-gray-300 h-14 rounded-2xl shadow-none"
-                  />
-                </div>
+                  Sign Up — it's free
+                </Button>
 
                 <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black h-16 rounded-2xl transition-all active:scale-[0.98] text-lg shadow-lg shadow-[#51EAA7]/20 disabled:opacity-50"
+                  variant="outline"
+                  onClick={() => setStep('signin')}
+                  className="w-full h-14 rounded-2xl border-2 border-[#651610] text-[#651610] font-black text-base bg-transparent hover:bg-[#651610]/5"
                 >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+                  Sign In
                 </Button>
-              </form>
 
-              <OrDivider />
-              <GoogleButton />
+                <OrDivider />
+                <GoogleButton />
 
-              <div className="text-center text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-                New here?{' '}
-                <button
-                  type="button"
-                  onClick={() => setStep('pick-username')}
-                  className="text-[#aab2ff] font-black hover:underline"
-                >
-                  Create a free account
-                </button>
+                {/* O6 — Privacy note */}
+                <p className="text-center text-[10px] text-gray-400 leading-relaxed pt-1">
+                  By signing up you agree to our{' '}
+                  {/* TODO: replace # with real Terms URL */}
+                  <a href="#" className="underline hover:text-[#651610]">Terms</a>
+                  {' '}&amp;{' '}
+                  {/* TODO: replace # with real Privacy Policy URL */}
+                  <a href="#" className="underline hover:text-[#651610]">Privacy Policy</a>
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Sign Up — Step 1: Email + Password ── */}
+          {step === 'signup-email' && (
+            <motion.div key="signup-email" {...slideIn}>
+              <LogoSection compact />
+              <BackButton to="landing" />
+
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-[32px] p-8 space-y-5 shadow-sm">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Create your account</h2>
+                  <p className="text-sm text-gray-400">Enter your email and choose a password.</p>
+                </div>
+
+                <form onSubmit={handleSignupEmail} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-email-input" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
+                      Email
+                    </Label>
+                    <Input
+                      id="signup-email-input"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={signupEmail}
+                      onChange={e => setSignupEmail(e.target.value)}
+                      required
+                      className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-password-input" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
+                      Password
+                    </Label>
+                    <Input
+                      id="signup-password-input"
+                      type="password"
+                      placeholder="Min. 8 characters"
+                      value={signupPassword}
+                      onChange={e => setSignupPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base shadow-lg shadow-[#651610]/20 disabled:opacity-50 mt-2"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Continue →'}
+                  </Button>
+                </form>
+
+                <p className="text-center text-[10px] text-gray-400 leading-relaxed">
+                  By signing up you agree to our{' '}
+                  <a href="#" className="underline hover:text-[#651610]">Terms</a>
+                  {' '}&amp;{' '}
+                  <a href="#" className="underline hover:text-[#651610]">Privacy Policy</a>
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Sign Up — Step 2: Username ── */}
+          {step === 'signup-username' && (
+            <motion.div key="signup-username" {...slideIn}>
+              <LogoSection compact />
+              {!hasExistingSession && <BackButton to="signup-email" />}
+
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-[32px] p-8 space-y-5 shadow-sm">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Choose your username</h2>
+                  <p className="text-sm text-gray-400">This is how you appear in arlo.</p>
+                </div>
+
+                <form onSubmit={handlePickUsername} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username-input" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
+                      Username
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black select-none">@</span>
+                      <Input
+                        id="username-input"
+                        type="text"
+                        placeholder="yourname"
+                        value={username}
+                        onChange={handleUsernameInput}
+                        maxLength={20}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-12 rounded-2xl pl-8 pr-10 shadow-none"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                        {usernameStatus === 'checking'  && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+                        {usernameStatus === 'available' && <Check className="w-4 h-4 text-[#651610]" />}
+                        {usernameStatus === 'taken'     && <X className="w-4 h-4 text-red-400" />}
+                      </span>
+                    </div>
+                    <p className={`text-[10px] ml-1 font-medium ${usernameHintColour[usernameStatus]}`}>
+                      {usernameHintText[usernameStatus]}
+                    </p>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={usernameStatus !== 'available' || loading}
+                    className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base shadow-lg shadow-[#651610]/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Claim Username →'}
+                  </Button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Sign In ── */}
+          {step === 'signin' && (
+            <motion.div key="signin" {...slideIn}>
+              <LogoSection compact />
+              <BackButton to="landing" />
+
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-[32px] p-8 space-y-5 shadow-sm">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Welcome back</h2>
+                  <p className="text-sm text-gray-400">Sign in to continue with arlo.</p>
+                </div>
+
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signin-email" className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1">
+                      Email
+                    </Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={signinEmail}
+                      onChange={e => setSigninEmail(e.target.value)}
+                      required
+                      className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between ml-1">
+                      <Label htmlFor="signin-password" className="text-gray-500 font-bold text-xs uppercase tracking-widest">
+                        Password
+                      </Label>
+                      {/* TODO: wire up forgot-password flow (PL8) */}
+                      <a href="#" className="text-[10px] font-bold text-[#651610] hover:underline">
+                        Forgot password?
+                      </a>
+                    </div>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signinPassword}
+                      onChange={e => setSigninPassword(e.target.value)}
+                      required
+                      className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base shadow-lg shadow-[#651610]/20 disabled:opacity-50 mt-2"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+                  </Button>
+                </form>
+
+                <OrDivider />
+                <GoogleButton />
+
+                <div className="text-center text-[11px] text-gray-400 font-bold uppercase tracking-widest">
+                  New here?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setStep('signup-email')}
+                    className="text-[#651610] font-black hover:underline"
+                  >
+                    Create a free account
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
