@@ -47,7 +47,7 @@ export function HomePage({ onStartScanning }: HomePageProps) {
     e.preventDefault();
     if (!waitlistEmail) return;
     setWaitlistJoined(true);
-    toast.success('You're on the list!');
+    toast.success("You're on the list!");
   };
 
   return (
