@@ -102,7 +102,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-[#EDF0F5] dark:bg-[#0F0F0F]">
 
       {/* Content area — height is 100vh minus bottom clearance for the fixed nav.
           box-sizing: border-box (Tailwind default) means padding-bottom shrinks the
@@ -132,14 +132,14 @@ export function MainApp({ onSignOut }: MainAppProps) {
 
       {/* Bottom Navigation — fixed to the viewport so it never scrolls away */}
       <div
-        className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 pt-3 px-6 z-40"
+        className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#1A1A1A]/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 pt-3 px-6 z-40"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
       >
         <div className="flex justify-between items-center">
           <button
             onClick={() => setCurrentPage('home')}
             className={`flex flex-col items-center justify-center transition-colors ${
-              currentPage === 'home' ? 'text-[#651610]' : 'text-gray-400'
+              currentPage === 'home' ? 'text-[#651610]' : 'text-gray-400 dark:text-gray-600'
             }`}
           >
             <Home className="w-6 h-6" />
@@ -159,7 +159,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <button
             onClick={() => setCurrentPage('cart')}
             className={`flex flex-col items-center justify-center transition-colors relative ${
-              currentPage === 'cart' ? 'text-[#651610]' : 'text-gray-400'
+              currentPage === 'cart' ? 'text-[#651610]' : 'text-gray-400 dark:text-gray-600'
             }`}
           >
             <ShoppingCart className="w-6 h-6" />
@@ -174,7 +174,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <button
             onClick={() => setCurrentPage('profile')}
             className={`flex flex-col items-center justify-center transition-colors ${
-              currentPage === 'profile' ? 'text-[#651610]' : 'text-gray-400'
+              currentPage === 'profile' ? 'text-[#651610]' : 'text-gray-400 dark:text-gray-600'
             }`}
           >
             <User className="w-6 h-6" />

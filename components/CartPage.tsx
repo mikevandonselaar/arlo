@@ -3,9 +3,7 @@ import { Minus, Plus, Trash2, ShoppingBag, X, ArrowRight, ChevronLeft, ExternalL
 import { Button } from './ui/button';
 import { CartItem } from './MainApp';
 import { motion, AnimatePresence } from 'motion/react';
-
-// B9: default currency GBP for alpha — will be user-configurable in Profile > Preferences
-const CURRENCY_SYMBOL = '£';
+import { useCurrency } from '../lib/currency';
 
 interface CartPageProps {
   cart: CartItem[];
@@ -269,6 +267,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
   const [selectedItem, setSelectedItem]   = useState<CartItem | null>(null);
   const [viewerItem,   setViewerItem]     = useState<CartItem | null>(null);
   const [viewerIndex,  setViewerIndex]    = useState(0);
+  const { symbol: CURRENCY_SYMBOL } = useCurrency(); // B9: user-configurable currency
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
