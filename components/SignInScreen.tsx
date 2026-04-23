@@ -14,6 +14,9 @@ import {
   signInWithGoogle,
 } from '../lib/auth';
 
+// Set to false once Supabase email confirmation is disabled in the dashboard
+const DEV_BYPASS_AUTH = true;
+
 export type SignInStep = 'landing' | 'signup-email' | 'signup-username' | 'signin';
 type UsernameStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken';
 
@@ -251,6 +254,15 @@ export function SignInScreen({
               <LogoSection />
 
               <div className="space-y-3">
+                {DEV_BYPASS_AUTH && (
+                  <Button
+                    onClick={onSignIn}
+                    className="w-full bg-[#FFC8FF] hover:bg-[#f0b0f0] text-[#651610] font-black h-14 rounded-2xl text-base"
+                  >
+                    Skip login (dev)
+                  </Button>
+                )}
+
                 <Button
                   onClick={() => setStep('signup-email')}
                   className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base shadow-lg shadow-[#651610]/20"
