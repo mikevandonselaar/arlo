@@ -63,6 +63,7 @@ export function SignInScreen({
   const [signinPassword, setSigninPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   // Username availability — debounced 400 ms
   useEffect(() => {
@@ -87,8 +88,14 @@ export function SignInScreen({
     e.preventDefault();
     setLoading(true);
     try {
-      await signUpWithEmail(signupEmail, signupPassword);
-      setStep('signup-username');
+      const hasSession = await signUpWithEmail(signupEmail, signupPassword);
+      if (hasSession) {
+        setStep('signup-username');
+      } else {
+        // Supabase "Confirm email" is ON — user must click the link first
+        setEmailConfirmationSent(true);
+        toast.success('Check your inbox — click the confirmation link, then sign in.');
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not create account');
     } finally {
@@ -215,8 +222,31 @@ export function SignInScreen({
 
         <AnimatePresence mode="wait">
 
+          {/* ── Email confirmation sent ── */}
+          {emailConfirmationSent && (
+            <motion.div key="confirm-email" {...slideIn} className="text-center space-y-6">
+              <LogoSection compact />
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-[32px] p-8 shadow-sm space-y-4">
+                <div className="w-14 h-14 rounded-full bg-[#FFC8FF] flex items-center justify-center mx-auto">
+                  <span className="text-2xl">✉️</span>
+                </div>
+                <h2 className="text-xl font-black text-gray-900 dark:text-white">Check your inbox</h2>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  We sent a confirmation link to <strong className="text-gray-700 dark:text-gray-200">{signupEmail}</strong>.
+                  Click it, then come back and sign in.
+                </p>
+                <Button
+                  onClick={() => { setEmailConfirmationSent(false); setStep('signin'); }}
+                  className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-12 rounded-2xl text-sm"
+                >
+                  Go to Sign In
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
           {/* ── Landing ── */}
-          {step === 'landing' && (
+          {!emailConfirmationSent && step === 'landing' && (
             <motion.div key="landing" {...slideIn}>
               <LogoSection />
 
@@ -253,7 +283,7 @@ export function SignInScreen({
           )}
 
           {/* ── Sign Up — Step 1: Email + Password ── */}
-          {step === 'signup-email' && (
+          {!emailConfirmationSent && step === 'signup-email' && (
             <motion.div key="signup-email" {...slideIn}>
               <LogoSection compact />
               <BackButton to="landing" />
@@ -316,7 +346,7 @@ export function SignInScreen({
           )}
 
           {/* ── Sign Up — Step 2: Username ── */}
-          {step === 'signup-username' && (
+          {!emailConfirmationSent && step === 'signup-username' && (
             <motion.div key="signup-username" {...slideIn}>
               <LogoSection compact />
               {!hasExistingSession && <BackButton to="signup-email" />}
@@ -370,7 +400,7 @@ export function SignInScreen({
           )}
 
           {/* ── Sign In ── */}
-          {step === 'signin' && (
+          {!emailConfirmationSent && step === 'signin' && (
             <motion.div key="signin" {...slideIn}>
               <LogoSection compact />
               <BackButton to="landing" />

@@ -40,12 +40,16 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
 
 /**
  * Creates a new account with email + password.
- * After this call the user has an active session (email may be unconfirmed
- * depending on Supabase project settings).
+ * Returns true when a session is immediately active (email confirmation OFF in
+ * Supabase), false when a confirmation email was sent and the user must click
+ * the link before they can sign in.
  */
-export async function signUpWithEmail(email: string, password: string): Promise<void> {
+export async function signUpWithEmail(email: string, password: string): Promise<boolean> {
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error || !data.user) throw new Error(error?.message ?? 'Sign-up failed');
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error('Sign-up failed — please try again.');
+  // session is null when Supabase "Confirm email" is enabled
+  return !!data.session;
 }
 
 /**
