@@ -7,6 +7,7 @@ import { Product } from './MainApp';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeLabelImage, LabelExtraction } from '../lib/vision';
+import { useCurrency } from '../lib/currency';
 
 // ── Dev mock ─────────────────────────────────────────────────────────────────
 // Set DEV_MOCK_SCAN = false once real API keys (VITE_OPENAI_API_KEY /
@@ -48,6 +49,7 @@ interface CameraScannerProps {
 }
 
 export function CameraScanner({ onAddToCart }: CameraScannerProps) {
+  const { symbol: currencySymbol } = useCurrency();
   const [isScanning, setIsScanning]         = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing]       = useState(false);
@@ -415,9 +417,8 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               {/* Price + Size */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  {/* A3: price warning label when empty/zero */}
                   <Label className={`font-bold text-[10px] uppercase tracking-widest ml-1 ${priceInvalid ? 'text-[#651610]' : 'text-gray-500'}`}>
-                    {priceInvalid ? '⚠ Price required' : 'Price (£)'}
+                    {priceInvalid ? '⚠ Price required' : `Price (${currencySymbol})`}
                   </Label>
                   {/* A3: red border when price is empty/zero */}
                   <Input
