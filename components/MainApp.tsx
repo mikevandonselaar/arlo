@@ -109,7 +109,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           content box, so each child's h-full stays above the nav. */}
       <div
         className="h-screen w-full overflow-hidden"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 7rem)' }}
       >
         {currentPage === 'home' && (
           <HomePage
