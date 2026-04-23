@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Camera, ShoppingCart, User } from 'lucide-react';
+import { Home, Camera, ShoppingBag, User } from 'lucide-react';
 import { HomePage } from './HomePage';
 import { CameraScanner } from './CameraScanner';
 import { CartPage } from './CartPage';
@@ -162,13 +162,13 @@ export function MainApp({ onSignOut }: MainAppProps) {
               currentPage === 'cart' ? 'text-[#651610]' : 'text-gray-400 dark:text-gray-600'
             }`}
           >
-            <ShoppingCart className="w-6 h-6" />
+            <ShoppingBag className="w-6 h-6" />
             {cartItemCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-[#651610] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                 {cartItemCount}
               </span>
             )}
-            <span className="text-[10px] mt-1 font-medium">Cart</span>
+            <span className="text-[10px] mt-1 font-medium">Bag</span>
           </button>
 
           <button

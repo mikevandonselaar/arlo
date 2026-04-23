@@ -5,6 +5,10 @@ import { CartItem } from './MainApp';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCurrency } from '../lib/currency';
 
+function googleShoppingUrl(brand: string, name: string) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`${brand} ${name}`)}`;
+}
+
 interface CartPageProps {
   cart: CartItem[];
   onUpdateQuantity: (dbId: string, quantity: number) => void;
@@ -124,6 +128,7 @@ interface ItemDetailProps {
 function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
   const photos = item.photos?.length ? item.photos : [item.image];
   const [photoIndex, setPhotoIndex] = useState(0);
+  const { symbol: currencySymbol } = useCurrency();
   const touchStartX = useRef<number | null>(null);
   const LABELS = ['GARMENT', 'EAN CODE', 'LABEL'];
 
@@ -206,7 +211,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest">{item.brand}</p>
           <h2 className="font-display text-gray-900 dark:text-white text-2xl mt-1 leading-tight">{item.name.toLowerCase()}</h2>
           <p className="text-2xl font-black text-gray-900 dark:text-white mt-2">
-            {CURRENCY_SYMBOL}{item.price.toFixed(2)}
+            {currencySymbol}{item.price.toFixed(2)}
           </p>
         </div>
 
@@ -237,13 +242,13 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           )}
         </div>
 
-        {/* B8: "Find this item online →" CTA */}
-        {/* TODO: wire up to EAN-database or retailer webshop (PL7) */}
         <a
-          href="#"
-          className="flex items-center justify-between w-full bg-[#651610] rounded-2xl px-5 py-4 group"
+          href={googleShoppingUrl(item.brand, item.name)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between w-full bg-[#651610] rounded-2xl px-5 py-4 group active:bg-[#7d1e17] transition-colors"
         >
-          <span className="text-white font-black text-sm">Find this item online</span>
+          <span className="text-white font-black text-sm">Find online</span>
           <ExternalLink className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
         </a>
 
