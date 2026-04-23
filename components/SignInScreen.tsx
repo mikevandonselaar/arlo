@@ -200,7 +200,7 @@ export function SignInScreen({
       {!compact && (
         <>
           <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-[0.2em] uppercase">
-            Shop now. Carry never.
+            Redefining physical shopping.
           </p>
         </>
       )}
