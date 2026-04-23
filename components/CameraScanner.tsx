@@ -12,7 +12,7 @@ import { useCurrency } from '../lib/currency';
 // ── Dev mock ─────────────────────────────────────────────────────────────────
 // Set DEV_MOCK_SCAN = false once real API keys (VITE_OPENAI_API_KEY /
 // VITE_ANTHROPIC_API_KEY) are configured in .env
-const DEV_MOCK_SCAN = true;
+const DEV_MOCK_SCAN = false;
 
 const MOCK_EXTRACTION: LabelExtraction = {
   ean:      '4066748396942',
