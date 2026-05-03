@@ -15,7 +15,7 @@ import {
 } from '../lib/auth';
 
 // Set to false once Supabase email confirmation is disabled in the dashboard
-const DEV_BYPASS_AUTH = true;
+const DEV_BYPASS_AUTH = false;
 
 export type SignInStep = 'landing' | 'signup-email' | 'signup-username' | 'signin';
 type UsernameStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken';

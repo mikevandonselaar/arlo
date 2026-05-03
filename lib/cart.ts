@@ -1,16 +1,37 @@
+/**
+ * lib/cart.ts
+ *
+ * V2-C3 — Anonymous session leak gedicht in ensureSession().
+ *
+ * PROBLEEM (oud):
+ *   Als er geen actieve Supabase sessie was, riep ensureSession() automatisch
+ *   supabase.auth.signInAnonymously() aan. Dit botste met ADR-005 (anonieme
+ *   accounts deprecated) en vervuilde de users-tabel bij elke cold start
+ *   zonder sessie — ook bij bots, crawlers en foutieve deeplinks.
+ *
+ * OPLOSSING:
+ *   ensureSession() gooit nu een Error als er geen sessie actief is.
+ *   MainApp.tsx onderschept cart-errors via de bestaande try/catch blokken
+ *   in addToCart / getCart — de gebruiker ziet een toast en de app blijft stabiel.
+ *   Alle calls die al een sessie hadden blijven ongewijzigd werken.
+ */
+
 import { supabase } from './supabase';
 import type { CartItem, Product } from '../components/MainApp';
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 
-/** Ensures an anonymous Supabase session exists, returning the user id. */
+/**
+ * Geeft de user-id van de actieve Supabase sessie terug.
+ * Gooit een Error als er geen sessie actief is — aanroepers moeten
+ * de gebruiker dan naar het sign-in scherm sturen.
+ *
+ * @throws Error 'No active session — please sign in before using the cart.'
+ */
 export async function ensureSession(): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) return session.user.id;
-
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error || !data.user) throw new Error(`Auth failed: ${error?.message}`);
-  return data.user.id;
+  throw new Error('No active session — please sign in before using the cart.');
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -192,7 +213,7 @@ export function enqueueProduct(product: Product): void {
 }
 
 /**
- * Step 2 retry: attempts to flush every queued product into Supabase.
+ * Attempts to flush every queued product into Supabase.
  * Successful items are removed from the queue; failed ones stay for the next attempt.
  * Returns the CartItems that were successfully saved (so the caller can merge into state).
  */
