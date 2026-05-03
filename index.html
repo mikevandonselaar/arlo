@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover is required for env(safe-area-inset-*) to have non-zero values on notched iOS devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Arlo</title>
+
+    <!-- PWA: theme + install -->
+    <meta name="theme-color" content="#651610" />
+    <link rel="manifest" href="./public/manifest.json" />
+
+    <!-- Typography: Plus Jakarta Sans (body/UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+    <!-- Sugo Pro Display Bold (headlines/display) is self-hosted — see /public/fonts/ -->
+    <!-- TODO: licence & place SugoProDisplay-Bold.woff2 in /public/fonts/ -->
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Arlo" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/main.tsx"></script>
+  </body>
+</html>
