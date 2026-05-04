@@ -4,6 +4,7 @@ import { HomePage } from './HomePage';
 import { CameraScanner } from './CameraScanner';
 import { CartPage } from './CartPage';
 import { ProfilePage } from './ProfilePage';
+import HeadsUpScreen from '../screens/HeadsUpScreen';
 import { toast } from 'sonner';
 import * as cartOps from '../lib/cart';
 
@@ -35,6 +36,7 @@ interface MainAppProps {
 
 export function MainApp({ onSignOut }: MainAppProps) {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [showHeadsUp, setShowHeadsUp] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   // On mount: drain any locally-queued items first, then load the full cart.
@@ -101,6 +103,10 @@ export function MainApp({ onSignOut }: MainAppProps) {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  if (showHeadsUp) {
+    return <HeadsUpScreen onBack={() => setShowHeadsUp(false)} />;
+  }
+
   return (
     <div className="min-h-screen w-full bg-[#EDF0F5] dark:bg-[#0F0F0F]">
 
@@ -115,6 +121,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
           <HomePage
             onAddToCart={addToCart}
             onStartScanning={() => setCurrentPage('camera')}
+            onNavigateToHeadsUp={() => setShowHeadsUp(true)}
           />
         )}
         {currentPage === 'camera' && <CameraScanner onAddToCart={addToCart} />}
@@ -126,7 +133,10 @@ export function MainApp({ onSignOut }: MainAppProps) {
           />
         )}
         {currentPage === 'profile' && (
-          <ProfilePage onSignOut={onSignOut} />
+          <ProfilePage
+            onSignOut={onSignOut}
+            onNavigateToHeadsUp={() => setShowHeadsUp(true)}
+          />
         )}
       </div>
 

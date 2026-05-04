@@ -12,6 +12,7 @@ import { useCurrency, Currency, CURRENCY_SYMBOLS } from '../lib/currency';
 
 interface ProfilePageProps {
   onSignOut: () => void;
+  onNavigateToHeadsUp: () => void;
 }
 
 function GoogleIcon() {
@@ -66,7 +67,7 @@ function MyOrdersPage({ onClose }: { onClose: () => void }) {
 
 // ── ProfilePage ───────────────────────────────────────────────────────────────
 
-export function ProfilePage({ onSignOut }: ProfilePageProps) {
+export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps) {
   const username = getStoredUsername();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
@@ -274,6 +275,16 @@ export function ProfilePage({ onSignOut }: ProfilePageProps) {
               Link Google Account
             </button>
           </div>
+
+          {/* Heads Up link */}
+          <button
+            type="button"
+            onClick={onNavigateToHeadsUp}
+            className="self-center mt-6 py-[6px] text-[11px] underline active:opacity-50 transition-opacity"
+            style={{ color: 'rgba(101,22,16,0.45)' }}
+          >
+            seen something weird? tell us.
+          </button>
 
           {/* P8: Sign Out — outline */}
           <button
