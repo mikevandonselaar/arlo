@@ -1,5 +1,59 @@
 @custom-variant dark (&:is(.dark *));
 
+/* ─── arlo. brand tokens ──────────────────────────────────────────────────────
+ * These are the single source of truth for all brand colours.
+ * Components should reference these vars instead of hardcoded hex values.
+ * ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --arlo-red:   #651610;
+  --arlo-pink:  #FFC8FF;
+  --arlo-grey:  #EDF0F5;
+  --arlo-white: #FFFFFF;
+
+  /* Semantic — light mode */
+  --arlo-bg:             #EDF0F5;
+  --arlo-bg-card:        #FFFFFF;
+  --arlo-text-primary:   #0F0F0F;
+  --arlo-text-secondary: #6B6B6B;
+  --arlo-input-bg:       #F5F5F5;
+  --arlo-input-border:   #E0E0E0;
+  --arlo-toolbar-bg:     #FFFFFF;
+}
+
+/* ─── Dark mode overrides (class-based, manual toggle only) ───────────────── */
+.dark {
+  --arlo-bg:             #0F0F0F;
+  --arlo-bg-card:        #1A1A1A;
+  --arlo-text-primary:   #FFFFFF;
+  --arlo-text-secondary: #A0A0A0;
+  --arlo-input-bg:       #2A2A2A;
+  --arlo-input-border:   #3A3A3A;
+  --arlo-toolbar-bg:     #1A1A1A;
+  /* Brand colours stay identical in dark mode */
+  --arlo-red:   #651610;
+  --arlo-pink:  #FFC8FF;
+}
+
+/* ─── Sugo Pro Display Bold — self-hosted ────────────────────────────────────
+ * Place the licensed font file at /public/fonts/SugoProDisplay-Bold.woff2
+ * Until the file is present, the display font falls back to system-ui bold.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Sugo Pro Display';
+  src: url('/fonts/SugoProDisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Utility class for display/headline text */
+.font-display {
+  font-family: 'Sugo Pro Display', system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
 :root {
   --font-size: 16px;
   --background: #ffffff;

@@ -1,20 +1,18 @@
-import { useState, useEffect } from 'react';
-import { User, Shield, LogOut, Check } from 'lucide-react';
+import { useState } from 'react';
+import { User, LogOut, ChevronRight, ChevronLeft, ShoppingBag, Sun, Moon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { toast } from 'sonner';
-import {
-  getStoredUsername,
-  isCurrentUserAnonymous,
-  linkEmailPassword,
-  linkGoogle,
-  signOut,
-} from '../lib/auth';
+import { motion, AnimatePresence } from 'motion/react';
+import { getStoredUsername, linkEmailPassword, linkGoogle, signOut } from '../lib/auth';
+import { useTheme } from '../lib/theme';
+import { useCurrency, Currency, CURRENCY_SYMBOLS } from '../lib/currency';
 
 interface ProfilePageProps {
   onSignOut: () => void;
+  onNavigateToHeadsUp: () => void;
 }
 
 function GoogleIcon() {
@@ -28,19 +26,59 @@ function GoogleIcon() {
   );
 }
 
-export function ProfilePage({ onSignOut }: ProfilePageProps) {
+// ── My Orders placeholder page ────────────────────────────────────────────────
+
+function MyOrdersPage({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+      className="fixed inset-0 z-50 bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] flex items-center justify-center shadow-sm"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        </button>
+        <span className="font-display text-[#651610] text-lg">my orders</span>
+      </div>
+
+      {/* Empty state */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-20 h-20 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <ShoppingBag className="w-9 h-9 text-gray-200 dark:text-gray-600" />
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-xs">
+          Your orders will appear here once you complete a purchase.
+        </p>
+        {/* TODO: connect to order system (PL10) */}
+        <div className="mt-10">
+          <span className="font-display text-[#651610] text-2xl opacity-40">arlo.</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── ProfilePage ───────────────────────────────────────────────────────────────
+
+export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps) {
   const username = getStoredUsername();
-  const [anonymous, setAnonymous] = useState<boolean | null>(null);
+  const { theme, setTheme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
+
+  const [showOrders, setShowOrders] = useState(false);
 
   // Email-linking form
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [linking, setLinking] = useState(false);
+  const [linking, setLinking]   = useState(false);
   const [emailLinked, setEmailLinked] = useState(false);
-
-  useEffect(() => {
-    isCurrentUserAnonymous().then(setAnonymous);
-  }, []);
 
   const handleLinkEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +88,7 @@ export function ProfilePage({ onSignOut }: ProfilePageProps) {
       setEmailLinked(true);
       toast.success('Email set — check your inbox to confirm.');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not link email');
+      toast.error(err instanceof Error ? err.message : 'Could not set email');
     } finally {
       setLinking(false);
     }
@@ -59,7 +97,6 @@ export function ProfilePage({ onSignOut }: ProfilePageProps) {
   const handleLinkGoogle = async () => {
     try {
       await linkGoogle();
-      // Redirects — cart data is preserved under the same user id
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not link Google account');
     }
@@ -70,59 +107,126 @@ export function ProfilePage({ onSignOut }: ProfilePageProps) {
     onSignOut();
   };
 
+  const CURRENCIES: Currency[] = ['GBP', 'EUR', 'USD'];
+
   return (
-    <div className="h-full flex flex-col bg-white">
+    <>
+      <div className="h-full flex flex-col bg-[#EDF0F5] dark:bg-[#0F0F0F]">
 
-      {/* Header */}
-      <div className="px-6 pt-2 pb-4 border-b border-gray-50 sticky top-0 bg-white/50 backdrop-blur-md z-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Profile</h1>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-12">
-
-        {/* Username card */}
-        <div className="bg-[#F5F5F7] rounded-3xl p-6 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-[#51EAA7]/15 flex items-center justify-center flex-shrink-0">
-            <User className="w-7 h-7 text-[#51EAA7]" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Username</p>
-            <p className="text-2xl font-black text-gray-900 truncate">@{username ?? '—'}</p>
-            {anonymous === true && (
-              <span className="text-[9px] font-black text-orange-400 uppercase tracking-wider">Anonymous account</span>
-            )}
-            {anonymous === false && (
-              <span className="text-[9px] font-black text-[#51EAA7] uppercase tracking-wider flex items-center gap-1">
-                <Check className="w-3 h-3" /> Secured
-              </span>
-            )}
-          </div>
+        {/* Header */}
+        <div className="px-6 pt-4 pb-4 sticky top-0 bg-[#EDF0F5] dark:bg-[#0F0F0F] z-10">
+          <h1 className="font-display text-[#651610] text-4xl leading-none">profile</h1>
         </div>
 
-        {/* ── Account-linking section (anonymous users only) ── */}
-        {anonymous === true && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-              <Shield className="w-4 h-4 text-gray-400" />
-              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Secure your account</h2>
+        <div className="flex-1 overflow-y-auto px-4 pb-12 space-y-4">
+
+          {/* P3: "Your Closet — Coming Soon" teaser — #FFC8FF, not clickable */}
+          <div className="bg-[#FFC8FF] rounded-3xl p-5 flex items-center gap-4" aria-label="Coming soon">
+            <div className="w-12 h-12 rounded-2xl bg-[#651610]/10 flex items-center justify-center flex-shrink-0">
+              <span className="font-display text-[#651610] text-lg">a.</span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-black text-[#651610] text-sm">Your Closet — Coming Soon</p>
+              <p className="text-[11px] text-[#651610]/70 mt-0.5 leading-snug">
+                Your full wardrobe, organized by arlo.
+              </p>
+            </div>
+          </div>
+
+          {/* Username card */}
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 flex items-center gap-4 shadow-sm">
+            {/* P1: profile icon #651610 */}
+            <div className="w-14 h-14 rounded-full bg-[#FFC8FF] flex items-center justify-center flex-shrink-0">
+              <User className="w-7 h-7 text-[#651610]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Username</p>
+              <p className="text-2xl font-black text-gray-900 dark:text-white truncate">@{username ?? '—'}</p>
+              {/* P2: no "Anonymous Account" label — anonymous accounts removed */}
+            </div>
+          </div>
+
+          {/* P4: Preferences section */}
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 shadow-sm space-y-5">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">Preferences</p>
+
+            {/* Currency */}
+            <div className="space-y-2.5">
+              <p className="text-xs font-black text-gray-700 dark:text-gray-300">Currency</p>
+              <div className="flex gap-2">
+                {CURRENCIES.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setCurrency(c)}
+                    className={`flex-1 h-10 rounded-xl text-sm font-black transition-colors ${
+                      currency === c
+                        ? 'bg-[#651610] text-white'
+                        : 'bg-[#EDF0F5] dark:bg-[#2A2A2A] text-gray-500 dark:text-gray-400 hover:bg-[#651610]/10'
+                    }`}
+                  >
+                    {CURRENCY_SYMBOLS[c]} {c}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Add an email and password so you can sign back in on any device. Your cart is preserved either way.
-            </p>
+            {/* Theme — Light / Dark — manual only, never follows system */}
+            <div className="space-y-2.5">
+              <p className="text-xs font-black text-gray-700 dark:text-gray-300">Theme</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTheme('light')}
+                  className={`flex-1 h-10 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-colors ${
+                    theme === 'light'
+                      ? 'bg-[#651610] text-white'
+                      : 'bg-[#EDF0F5] dark:bg-[#2A2A2A] text-gray-500 dark:text-gray-400 hover:bg-[#651610]/10'
+                  }`}
+                >
+                  <Sun className="w-4 h-4" />
+                  Light
+                </button>
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={`flex-1 h-10 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-[#651610] text-white'
+                      : 'bg-[#EDF0F5] dark:bg-[#2A2A2A] text-gray-500 dark:text-gray-400 hover:bg-[#651610]/10'
+                  }`}
+                >
+                  <Moon className="w-4 h-4" />
+                  Dark
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* P5: My Orders */}
+          <button
+            onClick={() => setShowOrders(true)}
+            className="w-full bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 flex items-center justify-between shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#EDF0F5] dark:bg-[#2A2A2A] flex items-center justify-center">
+                <ShoppingBag className="w-4 h-4 text-[#651610]" />
+              </div>
+              <span className="font-black text-gray-900 dark:text-white text-sm">My Orders</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+
+          {/* Account section */}
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 shadow-sm space-y-3">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">Account</p>
 
             {emailLinked ? (
-              <div className="bg-[#51EAA7]/10 rounded-2xl p-4 text-center space-y-1">
-                <p className="text-sm font-black text-[#51EAA7]">Check your inbox to confirm your email.</p>
-                <p className="text-xs text-gray-400">Your account and cart are safe.</p>
+              <div className="bg-[#FFC8FF] rounded-2xl p-4 text-center space-y-1">
+                <p className="text-sm font-black text-[#651610]">Check your inbox to confirm your email.</p>
+                <p className="text-xs text-[#651610]/60">Your account and bag are safe.</p>
               </div>
             ) : (
               <form onSubmit={handleLinkEmail} className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor="link-email"
-                    className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1"
-                  >
+                  <Label htmlFor="link-email" className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
                     Email
                   </Label>
                   <Input
@@ -132,69 +236,73 @@ export function ProfilePage({ onSignOut }: ProfilePageProps) {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-11 rounded-2xl shadow-none"
                   />
                 </div>
-
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor="link-password"
-                    className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-1"
-                  >
+                  <Label htmlFor="link-password" className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">
                     Password
                   </Label>
                   <Input
                     id="link-password"
                     type="password"
-                    placeholder="Min of 6 characters"
+                    placeholder="Min. 6 characters"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="bg-[#F5F5F7] border-transparent text-gray-900 placeholder:text-gray-300 h-12 rounded-2xl shadow-none"
+                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white placeholder:text-gray-300 h-11 rounded-2xl shadow-none"
                   />
                 </div>
-
+                {/* P6: Set Email & Password — #651610 */}
                 <Button
                   type="submit"
                   disabled={linking}
-                  className="w-full bg-[#51EAA7] hover:bg-[#3ddb94] text-black font-black h-12 rounded-2xl text-sm"
+                  className="w-full bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-11 rounded-2xl text-sm"
                 >
                   {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Set Email & Password'}
                 </Button>
               </form>
             )}
 
-            <div className="relative flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">or</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-
+            {/* P7: Link Google Account — outline #651610 */}
             <button
               type="button"
               onClick={handleLinkGoogle}
-              className="w-full bg-[#F5F5F7] border border-gray-200 h-12 rounded-2xl flex items-center justify-center gap-2.5 font-bold text-gray-700 hover:bg-gray-100 transition-colors text-sm"
+              className="w-full border-2 border-[#651610] h-11 rounded-2xl flex items-center justify-center gap-2.5 font-bold text-[#651610] hover:bg-[#651610]/5 transition-colors text-sm"
             >
               <GoogleIcon />
               Link Google Account
             </button>
           </div>
-        )}
 
-        {/* ── Sign out ── */}
-        <div className="pt-2">
+          {/* Heads Up link */}
+          <button
+            type="button"
+            onClick={onNavigateToHeadsUp}
+            className="self-center mt-6 py-[6px] text-[11px] underline active:opacity-50 transition-opacity"
+            style={{ color: 'rgba(101,22,16,0.45)' }}
+          >
+            seen something weird? tell us.
+          </button>
+
+          {/* P8: Sign Out — outline */}
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-bold text-sm hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>
-        </div>
 
+        </div>
       </div>
-    </div>
+
+      {/* P5: My Orders overlay */}
+      <AnimatePresence>
+        {showOrders && <MyOrdersPage onClose={() => setShowOrders(false)} />}
+      </AnimatePresence>
+    </>
   );
 }
