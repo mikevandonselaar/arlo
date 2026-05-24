@@ -153,7 +153,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
       className="fixed inset-0 z-50 bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col overflow-y-auto"
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0">
+      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0 bg-[#EDF0F5] dark:bg-[#0F0F0F]">
         <button
           onClick={onClose}
           className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] flex items-center justify-center shadow-sm"
@@ -166,6 +166,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
       {/* Photo gallery */}
       <div
         className="mx-4 rounded-3xl overflow-hidden bg-white dark:bg-[#1A1A1A] shadow-md aspect-[4/3] relative flex-shrink-0"
+        style={{ touchAction: 'none' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -438,8 +439,11 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
               {CURRENCY_SYMBOL}{subtotal.toFixed(2)}
             </span>
           </div>
-          <Button className="w-full h-14 rounded-2xl bg-[#651610] hover:bg-[#7d1e17] text-white font-black text-base shadow-lg shadow-[#651610]/20">
-            Checkout <ArrowRight className="w-4 h-4 ml-1" />
+          <Button
+            disabled
+            className="w-full h-14 rounded-2xl bg-gray-200 dark:bg-[#2A2A2A] text-gray-400 dark:text-gray-500 font-black text-base cursor-not-allowed shadow-none"
+          >
+            Checkout <span className="ml-1.5 text-xs font-bold opacity-60">(coming soon)</span>
           </Button>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const WHATS_NEW: string[] = [];
+
 interface Props {
   onBack: () => void;
 }
@@ -71,22 +73,27 @@ export default function HeadsUpScreen({ onBack }: Props) {
           </p>
         </div>
 
-        {/* What's new — collapsible */}
-        <button
-          onClick={() => setWhatsNewOpen(o => !o)}
-          className="w-full text-left rounded-[8px] p-[10px] mb-2 bg-[#F5F6F8]"
-        >
-          <span className="text-[11px] font-semibold" style={{ color: '#651610' }}>
-            {whatsNewOpen ? '▾' : '▸'} what's new
-          </span>
-        </button>
-        {whatsNewOpen && (
-          <div className="px-[10px] mb-4">
-            {/* TODO-VOLGENDE-FASE: vul met changelog data */}
-            <p className="text-[11px]" style={{ color: 'rgba(101,22,16,0.5)' }}>
-              Geen updates beschikbaar.
-            </p>
-          </div>
+        {/* What's new — collapsible; hidden when empty */}
+        {WHATS_NEW.length > 0 && (
+          <>
+            <button
+              onClick={() => setWhatsNewOpen(o => !o)}
+              className="w-full text-left rounded-[8px] p-[10px] mb-2 bg-[#F5F6F8]"
+            >
+              <span className="text-[11px] font-semibold" style={{ color: '#651610' }}>
+                {whatsNewOpen ? '▾' : '▸'} what's new
+              </span>
+            </button>
+            {whatsNewOpen && (
+              <div className="px-[10px] mb-4">
+                {WHATS_NEW.map((item) => (
+                  <p key={item} className="text-[11px]" style={{ color: 'rgba(101,22,16,0.5)' }}>
+                    · {item}
+                  </p>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* CTA */}

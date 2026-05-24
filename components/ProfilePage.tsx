@@ -201,18 +201,17 @@ export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps
           </div>
 
           {/* P5: My Orders */}
-          <button
-            onClick={() => setShowOrders(true)}
-            className="w-full bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 flex items-center justify-between shadow-sm"
-          >
+          <div className="w-full bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 flex items-center justify-between shadow-sm opacity-50">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#EDF0F5] dark:bg-[#2A2A2A] flex items-center justify-center">
                 <ShoppingBag className="w-4 h-4 text-[#651610]" />
               </div>
-              <span className="font-black text-gray-900 dark:text-white text-sm">My Orders</span>
+              <span className="font-black text-gray-900 dark:text-white text-sm">
+                My Orders <span className="text-xs font-bold text-gray-400">(coming soon)</span>
+              </span>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
-          </button>
+          </div>
 
           {/* Account section */}
           <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 shadow-sm space-y-3">
