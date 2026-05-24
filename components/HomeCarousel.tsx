@@ -45,7 +45,7 @@ function Dots({ index }: { index: number }) {
 
 // ── Slide 1: Welcome — achtergrond #651610 ────────────────────────────────────
 
-function Slide1({ onNext }: { onNext: () => void }) {
+function Slide1({ onStartScanning }: { onStartScanning: () => void }) {
   return (
     <div className="relative h-full overflow-hidden" style={{ backgroundColor: '#651610' }}>
       {/* Blobs: #FFC8FF, opacity 0.09 / 0.07 / 0.06 */}
@@ -69,7 +69,7 @@ function Slide1({ onNext }: { onNext: () => void }) {
           Physical shopping, evolved. Walk in, scan what catches your eye, and let arlo handle the rest. Join the people changing how fashion moves.
         </p>
         <button
-          onClick={onNext}
+          onClick={onStartScanning}
           className="active:scale-95 transition-transform"
           style={{ background: '#FFC8FF', color: '#651610', fontSize: 15, fontWeight: 700, padding: '15px 0', borderRadius: 28, textAlign: 'center', width: '100%', border: 'none', cursor: 'pointer', display: 'block' }}
         >
@@ -162,8 +162,8 @@ function Slide3() {
           className="active:opacity-75 transition-opacity"
           style={{ background: '#ffffff', borderRadius: 18, padding: '15px 16px', display: 'flex', alignItems: 'center', gap: 13, marginBottom: 10, border: '0.5px solid rgba(0,0,0,0.07)', textDecoration: 'none' }}
         >
-          <div style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#FFC8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20, color: '#651610' }}>
-            ◎
+          <div style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#FFC8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#651610' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#651610', marginBottom: 2 }}>Instagram</div>
@@ -178,8 +178,8 @@ function Slide3() {
           className="active:opacity-75 transition-opacity"
           style={{ background: '#ffffff', borderRadius: 18, padding: '15px 16px', display: 'flex', alignItems: 'center', gap: 13, marginBottom: 10, border: '0.5px solid rgba(0,0,0,0.07)', textDecoration: 'none' }}
         >
-          <div style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#FFC8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20, color: '#651610' }}>
-            ♪
+          <div style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#FFC8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#651610' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.18 8.18 0 004.78 1.52V6.87a4.85 4.85 0 01-1.01-.18z"/></svg>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#651610', marginBottom: 2 }}>TikTok</div>
@@ -306,9 +306,10 @@ export interface HomeCarouselProps {
   availableHeight: number;
   onJoin: () => void;
   onFeedback: () => void;
+  onStartScanning: () => void;
 }
 
-export default function HomeCarousel({ onJoin, onFeedback }: HomeCarouselProps) {
+export default function HomeCarousel({ onJoin, onFeedback, onStartScanning }: HomeCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection]       = useState(1);
   const touchStartX = useRef<number | null>(null);
@@ -343,7 +344,7 @@ export default function HomeCarousel({ onJoin, onFeedback }: HomeCarouselProps) 
           transition={{ type: 'tween', duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
           className="absolute inset-0"
         >
-          {currentSlide === 0 && <Slide1 onNext={() => goTo(1, 1)} />}
+          {currentSlide === 0 && <Slide1 onStartScanning={onStartScanning} />}
           {currentSlide === 1 && <Slide2 onJoin={onJoin} />}
           {currentSlide === 2 && <Slide3 />}
           {currentSlide === 3 && <Slide4 onFeedback={onFeedback} />}

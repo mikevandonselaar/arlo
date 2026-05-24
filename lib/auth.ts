@@ -174,6 +174,13 @@ export async function isCurrentUserAnonymous(): Promise<boolean> {
   return user?.is_anonymous ?? false;
 }
 
+export async function addToWaitlist(email: string): Promise<void> {
+  const { error } = await supabase
+    .from('waitlist')
+    .insert({ email });
+  if (error) throw new Error(error.message);
+}
+
 export async function signOut(): Promise<void> {
   clearStoredUsername();
   await supabase.auth.signOut();
