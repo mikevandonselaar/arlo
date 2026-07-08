@@ -4,10 +4,7 @@ import { Button } from './ui/button';
 import { CartItem } from './MainApp';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCurrency } from '../lib/currency';
-
-function googleShoppingUrl(brand: string, name: string) {
-  return `https://www.google.com/search?q=${encodeURIComponent(`${brand} ${name}`)}`;
-}
+import { findOnline } from '../lib/resolveUrl';
 
 interface CartPageProps {
   cart: CartItem[];
@@ -128,6 +125,7 @@ interface ItemDetailProps {
 function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
   const photos = item.photos?.length ? item.photos : [item.image];
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [isFinding, setIsFinding] = useState(false);
   const { symbol: currencySymbol } = useCurrency();
   const touchStartX = useRef<number | null>(null);
   const LABELS = ['GARMENT', 'EAN CODE', 'LABEL'];
@@ -243,15 +241,20 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           )}
         </div>
 
-        <a
-          href={googleShoppingUrl(item.brand, item.name)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between w-full bg-[#651610] rounded-2xl px-5 py-4 group active:bg-[#7d1e17] transition-colors"
+        <button
+          onClick={async () => {
+            setIsFinding(true);
+            await findOnline({ ean: item.ean, brand: item.brand, name: item.name });
+            setIsFinding(false);
+          }}
+          disabled={isFinding}
+          className="flex items-center justify-between w-full bg-[#651610] rounded-2xl px-5 py-4 group active:bg-[#7d1e17] transition-colors disabled:opacity-60 disabled:cursor-wait"
         >
-          <span className="text-white font-black text-sm">Find online</span>
+          <span className="text-white font-black text-sm">
+            {isFinding ? 'Looking up…' : 'Find online'}
+          </span>
           <ExternalLink className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
-        </a>
+        </button>
 
         <button
           onClick={onRemove}
