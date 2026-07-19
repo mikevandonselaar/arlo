@@ -19,6 +19,7 @@ export interface Product {
   brand: string;
   category: string;
   ean?: string;
+  articleCode?: string;
   size?: string;
   color?: string;
   scannedAt?: string;

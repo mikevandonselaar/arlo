@@ -82,6 +82,7 @@ create table if not exists public.cart_items (
   category    text not null default '',
   image_url   text not null default '',
   ean         text,
+  article_code text,
   size        text,
   color       text,
   scanned_at  text,
@@ -89,6 +90,10 @@ create table if not exists public.cart_items (
   quantity    integer not null default 1,
   created_at  timestamptz not null default now()
 );
+
+-- Idempotent voor bestaande databases waar cart_items al bestond vóór dit veld
+-- is toegevoegd — `create table if not exists` hierboven raakt bestaande tabellen niet aan.
+alter table public.cart_items add column if not exists article_code text;
 
 alter table public.cart_items enable row level security;
 

@@ -26,6 +26,7 @@ interface LabelExtraction {
   size: string | null;
   color: string | null;
   material: string | null;
+  articleCode: string | null;
 }
 
 // ─── Shared prompt & parser (duplicated from lib/vision.ts) ──────────────────
@@ -43,7 +44,8 @@ Return ONLY a valid JSON object — no markdown, no code fences, no explanation:
   "category": "<one of: Tops, Bottoms, Outerwear, Knitwear, Footwear, Accessories, Swimwear, Sportswear, or your best guess>",
   "size": "<garment size if printed on label, otherwise null>",
   "color": "<primary colour if stated on label, otherwise null>",
-  "material": "<fibre/fabric composition if printed, otherwise null>"
+  "material": "<fibre/fabric composition if printed, otherwise null>",
+  "articleCode": "<the brand's own article/style number as printed on the label or box (e.g. 'JQ8835', '0677207001', 'C6860-S'). This is NOT the EAN and NOT the product name. Return null if not visible>"
 }`;
 
 function parseExtraction(raw: string): LabelExtraction {

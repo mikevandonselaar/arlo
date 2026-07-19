@@ -125,8 +125,8 @@ interface ItemDetailProps {
 function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
   const photos = item.photos?.length ? item.photos : [item.image];
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [isFinding, setIsFinding] = useState(false);
   const { symbol: currencySymbol } = useCurrency();
+  const [isFinding, setIsFinding] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const LABELS = ['GARMENT', 'EAN CODE', 'LABEL'];
 
@@ -244,7 +244,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
         <button
           onClick={async () => {
             setIsFinding(true);
-            await findOnline({ ean: item.ean, brand: item.brand, name: item.name });
+            await findOnline({ ean: item.ean, brand: item.brand, name: item.name, articleCode: item.articleCode, category: item.category });
             setIsFinding(false);
           }}
           disabled={isFinding}

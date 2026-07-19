@@ -23,6 +23,7 @@ const MOCK_EXTRACTION: LabelExtraction = {
   size:     '42',
   color:    'Core Black',
   material: '100% Primeknit upper',
+  articleCode: 'FY0121',
 };
 
 // S4: Ordered 3-photo flow — recommended but not enforced
@@ -116,6 +117,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         image:     capturedPhotos[0], // garment photo → cart thumbnail (B4)
         photos:    [...capturedPhotos], // all photos for detail viewer (B5/B8)
         ean:       extraction.ean ?? undefined,
+        articleCode: extraction.articleCode ?? undefined,
         size:      extraction.size ?? undefined,
         color:     extraction.color ?? undefined,
         scannedAt: 'In-Store Scan',
