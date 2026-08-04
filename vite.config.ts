@@ -40,8 +40,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            // Cache Supabase auth/data requests with network-first strategy
-            urlPattern: ({ url }) => url.hostname.includes('supabase.co'),
+            // Cache alleen data-verzoeken — inlog-verzoeken NOOIT cachen,
+            // anders breekt Google-login met "bad_oauth_state"-fouten.
+            urlPattern: ({ url }) =>
+              url.hostname.includes('supabase.co') && !url.pathname.startsWith('/auth/'),
             handler: 'NetworkFirst',
             options: { cacheName: 'supabase-cache', networkTimeoutSeconds: 5 },
           },
