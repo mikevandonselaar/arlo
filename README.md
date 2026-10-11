@@ -1,8 +1,8 @@
-# Arlo — KODA In-Store Shopping App
+# utan
 
-A React mobile app prototype for an in-store barcode scanning shopping experience branded **KODA**. Shoppers walk into physical retail stores, scan product EAN barcodes with their phone camera, and build a cross-store cart — all fulfilled and shipped by KODA.
+Mobiele web-app (PWA) voor winkelen in fysieke winkels zonder tas: fotografeer een kledingstuk en het label, utan leest het product uit, zet het in je winkelmand en zoekt het online op.
 
-The app renders as a 390×844px iPhone mockup with a Dynamic Island and home indicator bar.
+De app heette eerder arlo; de repo en het Vercel-project heten nog zo. Stack, structuur en huisstijl staan in [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -83,9 +83,10 @@ arlo/
 ├── main.tsx                 # React entry point
 ├── components/
 │   ├── SignInScreen.tsx      # Auth flow (email, Google OAuth, username pick)
-│   ├── MainApp.tsx           # App shell: iPhone frame, bottom nav, cart state
-│   ├── HomePage.tsx          # Landing page with brand carousel
-│   ├── HomeCarousel.tsx      # Swipeable campaign cards
+│   ├── MainApp.tsx           # App shell: bottom nav, cart state
+│   ├── Wordmark.tsx          # Temporary "UTAN" text wordmark
+│   ├── PurchaseConfirmation.tsx  # Full-blue confirmation screen
+│   ├── HomePage.tsx          # Scrollable home: welcome + what to expect
 │   ├── CameraScanner.tsx     # Camera feed, barcode scan, product drawer
 │   ├── CartPage.tsx          # Cart grouped by brand, quantity controls, checkout
 │   ├── ProfilePage.tsx       # User profile view
@@ -98,38 +99,17 @@ arlo/
 │   ├── api.ts                # Generic fetch helpers
 │   ├── vision.ts             # Barcode / product image recognition
 │   ├── claude.ts             # Anthropic Claude integration
-│   ├── currency.tsx          # Price formatting
-│   └── theme.tsx             # Theme utilities
+│   └── currency.tsx          # Currency preference
 ├── screens/
 │   └── HeadsUpScreen.tsx     # Full-screen contextual overlays
 ├── assets/                   # Static images
 ├── guidelines/               # Design guidelines reference
 ├── vite.config.ts
-├── tailwind.config.js
 └── package.json
 ```
 
 ---
 
-## Key Concepts
+## Huisstijl
 
-**Cart keying** — the cart is keyed on `(productId, scannedAt)`. The same product scanned at two different stores appears as two separate line items, reflecting which store fulfilled the order.
-
-**Barcode scanning** — `CameraScanner.tsx` currently simulates scanning via `simulateScan()`, which picks a random EAN from a hardcoded `productDatabase`. Real camera-based barcode decoding is not yet wired up.
-
-**Authentication** — Supabase handles email/password and Google OAuth. On first OAuth sign-in the user is prompted to pick a username before reaching the main app.
-
-**PWA** — The app is configured as a Progressive Web App. Running `npm run build` produces a service worker that precaches all static assets and uses a network-first strategy for Supabase requests.
-
----
-
-## Design Language
-
-| Token | Value |
-|---|---|
-| Primary accent | `#51EAA7` (green) |
-| Secondary accent | `#aab2ff` (lavender) |
-| Tertiary accent | `#eca0ff` (purple/pink) |
-| Background | `#F5F5F7` (light grey) |
-
-Heavy use of `font-black`, `rounded-[40px]` corners, and glassmorphism (`backdrop-blur`). London-based store locations throughout (Soho, Shoreditch, Oxford St, Regent St).
+Tokens, typografie, kleurregel en copy: zie [CLAUDE.md](CLAUDE.md). De tokens zelf staan in `styles/globals.css`.

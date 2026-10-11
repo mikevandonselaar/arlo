@@ -49,9 +49,18 @@ export default function App() {
   const handleSignOut = () => setState('auth');
 
   return (
-    <div className="min-h-screen bg-[#EDF0F5] dark:bg-[#0F0F0F] selection:bg-[#FFC8FF]/50">
+    <div className="min-h-screen bg-bg text-ink selection:bg-accent selection:text-on-accent">
       {/* Toaster must live here so it's present during auth AND in-app */}
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster
+        position="top-center"
+        closeButton
+        toastOptions={{
+          classNames: {
+            toast: '!bg-bg !text-ink !border !border-line !rounded-sm !shadow-none !font-sans',
+            closeButton: '!bg-bg !text-ink !border-line',
+          },
+        }}
+      />
 
       {state === 'loading' ? (
         <div className="min-h-screen" />

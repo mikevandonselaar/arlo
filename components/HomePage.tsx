@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, X, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner';
-import HomeCarousel from './HomeCarousel';
-import { addToWaitlist } from '../lib/auth';
+import { MapPin } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
+import { Wordmark } from './Wordmark';
 
 interface HomePageProps {
   onAddToCart: (product: never) => void;
@@ -11,120 +9,26 @@ interface HomePageProps {
   onNavigateToHeadsUp: () => void;
 }
 
-function JoinModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail]         = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone]           = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+const KNOWN_ISSUES = [
+  'Take a sharp photo of the label. The barcode has to be fully visible.',
+  'The price is usually filled in automatically. Sometimes you have to correct it.',
+  'utan only works with stores that also sell online. Your scan is matched to their webshop.',
+  'Location accuracy depends on your device settings.',
+  'Payments are not in the app yet. That comes later.',
+  'Delivery is handled by the store.',
+  'This is an early alpha. Not everything works yet.',
+];
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await addToWaitlist(email);
-      setDone(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not save email');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-end justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="w-full bg-white dark:bg-[#1A1A1A] rounded-t-[32px] px-6 pt-6 pb-10"
-      >
-        {/* Handle + close */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
-          <div />
-          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#EDF0F5] dark:bg-[#2A2A2A] flex items-center justify-center ml-auto">
-            <X className="w-4 h-4 text-gray-500" />
-          </button>
-        </div>
-
-        <AnimatePresence mode="wait">
-          {done ? (
-            <motion.div
-              key="done"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-4"
-            >
-              <div className="w-14 h-14 rounded-full bg-[#FFC8FF] flex items-center justify-center mx-auto mb-4">
-                <span className="font-display text-[#651610] text-2xl">a.</span>
-              </div>
-              <p className="font-black text-[#651610] text-xl mb-2">you're in.</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                We've saved your email. Welcome to arlo.
-              </p>
-              <button
-                onClick={onClose}
-                className="mt-6 w-full h-12 rounded-2xl bg-[#651610] text-white font-black text-sm active:opacity-80 transition-opacity"
-              >
-                Start scanning →
-              </button>
-            </motion.div>
-          ) : (
-            <motion.form
-              key="form"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              onSubmit={handleSubmit}
-            >
-              <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest mb-2">join arlo.</p>
-              <h2 className="font-display text-gray-900 dark:text-white text-2xl leading-tight mb-1">
-                stay in the loop.
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                Leave your email and we'll keep you posted on new stores, features, and drops.
-              </p>
-
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 block mb-1.5">
-                Email address
-              </label>
-              <input
-                ref={inputRef}
-                type="email"
-                required
-                placeholder="name@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full h-12 rounded-2xl bg-[#EDF0F5] dark:bg-[#2A2A2A] px-4 text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-300 border-none outline-none mb-4"
-              />
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full h-12 rounded-2xl bg-[#651610] text-white font-black text-sm flex items-center justify-center gap-2 active:opacity-80 transition-opacity disabled:opacity-60"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join arlo. →'}
-              </button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
-  );
-}
+const VERSIONS = [
+  { version: 'v0.3', date: '3 May 2026', lines: ['Community screen live', 'Onboarding redesigned', 'Follow slide updated'] },
+  { version: 'v0.2', date: 'April 2026', lines: ['Cart added', 'Profile screen live'] },
+  { version: 'v0.1', date: 'first alpha', lines: ['App launched internally'] },
+];
 
 export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps) {
-  const [city, setCity]           = useState<string | null>(null);
-  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [city, setCity] = useState<string | null>(null);
+  const expectRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -143,40 +47,97 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
     );
   }, []);
 
-  const availableHeight = window.innerHeight - 56 - 34;
+  const scrollToExpect = () => {
+    expectRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
 
   return (
-    <>
-      <div className="h-full bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col">
+    <div className="h-full bg-bg text-ink flex flex-col">
 
-        {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="font-display text-[#651610] text-2xl leading-none">arlo.</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#FFC8FF] text-[#651610] text-[9px] font-black tracking-widest uppercase">
-              alpha
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A1A1A] rounded-full pl-2.5 pr-3.5 py-1.5 shadow-sm">
-            <MapPin className="w-3.5 h-3.5 text-[#651610] flex-shrink-0" />
-            <span className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-none">
-              {city ?? 'Locating…'}
-            </span>
-          </div>
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center justify-between flex-shrink-0 border-b border-line">
+        <div className="flex items-center gap-2">
+          <Wordmark className="text-2xl" />
+          <span className="type-data text-muted border border-line rounded-sm px-1.5">
+            alpha
+          </span>
         </div>
-
-        <HomeCarousel
-          availableHeight={availableHeight}
-          onJoin={() => setShowJoinModal(true)}
-          onFeedback={onNavigateToHeadsUp}
-          onStartScanning={onStartScanning}
-        />
-
+        <div className="flex items-center gap-1.5 border border-line rounded-sm pl-2.5 pr-3.5 py-1.5">
+          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="type-data">
+            {city ?? 'Locating'}
+          </span>
+        </div>
       </div>
 
-      <AnimatePresence>
-        {showJoinModal && <JoinModal onClose={() => setShowJoinModal(false)} />}
-      </AnimatePresence>
-    </>
+      {/* One scrollable page: welcome first, "what to expect" below the fold */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+
+        {/* Welcome — fills the screen, content anchored to the bottom */}
+        <section className="min-h-full flex flex-col justify-end px-6 pt-10 pb-8">
+          <h1 className="type-hero mb-5">
+            Welcome to utan.
+          </h1>
+          <p className="text-sm text-muted leading-relaxed mb-6">
+            Walk into a store, scan what you want and utan handles the rest.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={onStartScanning}
+              className="block w-full h-14 rounded-sm bg-accent text-on-accent text-base font-medium active:opacity-70"
+            >
+              Start scanning
+            </button>
+            <button
+              onClick={scrollToExpect}
+              className="block w-full h-14 rounded-sm border border-ink text-ink text-base font-medium active:opacity-70"
+            >
+              What to expect
+            </button>
+          </div>
+        </section>
+
+        {/* What to expect — known issues and versions */}
+        <section ref={expectRef} className="px-6 pt-8 pb-10 border-t border-line">
+          <h2 className="text-3xl font-medium leading-[1.1] tracking-[-0.02em] mb-8">
+            What to expect
+          </h2>
+
+          <p className="type-data text-muted mb-3">Good to know</p>
+          <ul className="border-t border-line mb-10">
+            {KNOWN_ISSUES.map(item => (
+              <li key={item} className="py-3 border-b border-line text-sm leading-normal">
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <p className="type-data text-muted mb-3">Versions</p>
+          <ul className="border-t border-line mb-10">
+            {VERSIONS.map(note => (
+              <li key={note.version} className="py-3 border-b border-line flex gap-4">
+                <div className="w-24 flex-shrink-0">
+                  <p className="type-data">{note.version}</p>
+                  <p className="type-data text-muted">{note.date}</p>
+                </div>
+                <div className="text-sm leading-normal">
+                  {note.lines.map(line => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            onClick={onNavigateToHeadsUp}
+            className="text-sm text-muted underline active:opacity-70"
+          >
+            Seen something weird? Send feedback.
+          </button>
+        </section>
+
+      </div>
+    </div>
   );
 }
