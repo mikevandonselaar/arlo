@@ -48,12 +48,11 @@ components/
   Wordmark.tsx           tijdelijke tekst-wordmark "UTAN"
   SignInScreen.tsx       landing, account maken, gebruikersnaam, inloggen
   MainApp.tsx            schil: pagina-state, winkelmand-state, navigatiebalk
-  HomePage.tsx           kop met wordmark + locatie, aanmeldmodal
-  HomeCarousel.tsx       vier swipebare slides
+  HomePage.tsx           één scrollpagina: welkom + "Wat je kunt verwachten"
   CameraScanner.tsx      camera, drie foto's, analyse, bewerkbare resultaatlade
   CartPage.tsx           winkelmand per merk, productdetail, fotoviewer
   PurchaseConfirmation.tsx  het blauwe moment
-  ProfilePage.tsx        gebruikersnaam, valuta, account koppelen, uitloggen
+  ProfilePage.tsx        gebruikersnaam, bestellingen (binnenkort), uitloggen
   ui/                    shadcn/ui
 screens/HeadsUpScreen.tsx  alpha-disclaimer + feedback
 lib/
@@ -61,7 +60,7 @@ lib/
   cart.ts                winkelmand in Supabase + lokale wachtrij bij offline
   vision.ts  claude.ts   label uitlezen (dev: Vite-proxy, prod: /api/vision)
   resolveUrl.ts          client voor /api/resolve-url
-  currency.tsx           valutakeuze (GBP/EUR/USD)
+  currency.tsx           valuta (standaard GBP; geen keuze meer in de UI)
 api/                     Vercel functions
 scripts/generate-icons.mjs  favicon, app-iconen en og-image uit het font
 ```
@@ -98,7 +97,7 @@ Accent staat alleen op:
 - de vier scanhoeken
 - de primaire knop van een scherm (`Koop`, `Start camera`, `Account maken`)
 - status-stippen (`Gescand`, teller op de mand)
-- geselecteerde toestanden (actieve tab, gekozen valuta, actieve slide)
+- geselecteerde toestanden (actieve tab)
 
 Al het andere is ink op bg. Geen emoji, geen illustraties, geen schaduwen, geen
 gradients, geen `backdrop-blur`. Alleen licht thema: geen `dark:`-klassen in nieuwe code.

@@ -86,8 +86,7 @@ arlo/
 │   ├── MainApp.tsx           # App shell: bottom nav, cart state
 │   ├── Wordmark.tsx          # Temporary "UTAN" text wordmark
 │   ├── PurchaseConfirmation.tsx  # Full-blue confirmation screen
-│   ├── HomePage.tsx          # Landing page with brand carousel
-│   ├── HomeCarousel.tsx      # Swipeable campaign cards
+│   ├── HomePage.tsx          # Scrollable home: welcome + what to expect
 │   ├── CameraScanner.tsx     # Camera feed, barcode scan, product drawer
 │   ├── CartPage.tsx          # Cart grouped by brand, quantity controls, checkout
 │   ├── ProfilePage.tsx       # User profile view
