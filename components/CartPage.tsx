@@ -1,10 +1,17 @@
 import { useState, useRef } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, X, ArrowRight, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, X, ChevronLeft, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
 import { CartItem } from './MainApp';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCurrency } from '../lib/currency';
 import { findOnline } from '../lib/resolveUrl';
+import { PurchaseConfirmation } from './PurchaseConfirmation';
+
+// Checkout isn't live yet. In dev builds "Koop" opens the confirmation screen so
+// the design can be reviewed; in production the button stays disabled as before.
+const CHECKOUT_PREVIEW = import.meta.env.DEV;
+
+const PHOTO_LABELS = ['Kledingstuk', 'EAN', 'Label'];
 
 interface CartPageProps {
   cart: CartItem[];
@@ -38,27 +45,26 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
     touchStartX.current = null;
   };
 
-  const LABELS = ['GARMENT', 'EAN CODE', 'LABEL'];
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black flex flex-col"
+      className="fixed inset-0 z-[100] bg-ink text-bg flex flex-col"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
-        <span className="text-white/50 text-[10px] font-black tracking-widest uppercase">
-          {LABELS[index] ?? `Photo ${index + 1}`}
+        <span className="type-data text-bg/60">
+          {PHOTO_LABELS[index] ?? `Foto ${index + 1}`}
         </span>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          aria-label="Sluit"
+          className="w-10 h-10 rounded-sm border border-bg/30 flex items-center justify-center active:opacity-70"
         >
-          <X className="w-5 h-5 text-white" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
@@ -68,12 +74,12 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
           <motion.img
             key={index}
             src={photos[index]}
-            alt={LABELS[index] ?? `Photo ${index + 1}`}
+            alt={PHOTO_LABELS[index] ?? `Foto ${index + 1}`}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-h-full object-contain rounded-2xl"
+            className="w-full max-h-full object-contain rounded-sm"
           />
         </AnimatePresence>
       </div>
@@ -86,7 +92,7 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
               key={i}
               onClick={() => setIndex(i)}
               className={`h-1.5 rounded-full transition-all ${
-                i === index ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
+                i === index ? 'w-6 bg-bg' : 'w-1.5 bg-bg/30'
               }`}
             />
           ))}
@@ -96,16 +102,16 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
             <button
               onClick={prev}
               disabled={index === 0}
-              className="px-5 py-2.5 rounded-full bg-white/10 text-white text-sm font-bold disabled:opacity-30"
+              className="px-5 py-2.5 rounded-sm border border-bg/30 text-sm font-medium active:opacity-70 disabled:opacity-30"
             >
-              ← Prev
+              Vorige
             </button>
             <button
               onClick={next}
               disabled={index === photos.length - 1}
-              className="px-5 py-2.5 rounded-full bg-white/10 text-white text-sm font-bold disabled:opacity-30"
+              className="px-5 py-2.5 rounded-sm border border-bg/30 text-sm font-medium active:opacity-70 disabled:opacity-30"
             >
-              Next →
+              Volgende
             </button>
           </div>
         )}
@@ -128,7 +134,6 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
   const { symbol: currencySymbol } = useCurrency();
   const [isFinding, setIsFinding] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const LABELS = ['GARMENT', 'EAN CODE', 'LABEL'];
 
   const prev = () => setPhotoIndex(i => Math.max(0, i - 1));
   const next = () => setPhotoIndex(i => Math.min(photos.length - 1, i + 1));
@@ -148,22 +153,23 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
       animate={{ y: 0 }}
       exit={{ y: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-      className="fixed inset-0 z-50 bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col overflow-y-auto"
+      className="fixed inset-0 z-50 bg-bg text-ink flex flex-col overflow-y-auto"
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0 bg-[#EDF0F5] dark:bg-[#0F0F0F]">
+      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0 bg-bg">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] flex items-center justify-center shadow-sm"
+          aria-label="Terug"
+          className="w-10 h-10 rounded-sm border border-line flex items-center justify-center active:opacity-70"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="font-display text-[#651610] text-lg">item details</span>
+        <span className="text-lg font-medium">Product</span>
       </div>
 
       {/* Photo gallery */}
       <div
-        className="mx-4 rounded-3xl overflow-hidden bg-white dark:bg-[#1A1A1A] shadow-md aspect-[4/3] relative flex-shrink-0"
+        className="mx-4 rounded-sm overflow-hidden border border-line aspect-[4/3] relative flex-shrink-0"
         style={{ touchAction: 'none' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -172,7 +178,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           <motion.img
             key={photoIndex}
             src={photos[photoIndex]}
-            alt={LABELS[photoIndex] ?? `Photo ${photoIndex + 1}`}
+            alt={PHOTO_LABELS[photoIndex] ?? `Foto ${photoIndex + 1}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -182,9 +188,9 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
         </AnimatePresence>
 
         {/* Photo label badge */}
-        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full">
-          <span className="text-white text-[9px] font-black tracking-widest">
-            {LABELS[photoIndex] ?? `PHOTO ${photoIndex + 1}`}
+        <div className="absolute top-3 left-3 bg-ink px-2.5 py-1 rounded-sm">
+          <span className="type-data text-bg">
+            {PHOTO_LABELS[photoIndex] ?? `Foto ${photoIndex + 1}`}
           </span>
         </div>
 
@@ -196,7 +202,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
                 key={i}
                 onClick={() => setPhotoIndex(i)}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === photoIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
+                  i === photoIndex ? 'w-5 bg-accent' : 'w-1.5 bg-ink/40'
                 }`}
               />
             ))}
@@ -205,38 +211,38 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
       </div>
 
       {/* Details card */}
-      <div className="mx-4 mt-4 bg-white dark:bg-[#1A1A1A] rounded-3xl p-6 shadow-sm space-y-4">
+      <div className="mx-4 mt-4 border border-line rounded-sm p-6 space-y-4">
         <div>
-          <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest">{item.brand}</p>
-          <h2 className="font-display text-gray-900 dark:text-white text-2xl mt-1 leading-tight">{item.name.toLowerCase()}</h2>
-          <p className="text-2xl font-black text-gray-900 dark:text-white mt-2">
+          <p className="type-data text-muted">{item.brand}</p>
+          <h2 className="text-xl font-medium mt-1 leading-tight">{item.name}</h2>
+          <p className="type-hero tabular-nums mt-4">
             {currencySymbol}{item.price.toFixed(2)}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {item.size && (
-            <div className="bg-[#EDF0F5] dark:bg-[#2A2A2A] rounded-2xl px-4 py-3">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Size</p>
-              <p className="text-sm font-black text-gray-900 dark:text-white">{item.size}</p>
+            <div className="border border-line rounded-sm px-4 py-3">
+              <p className="type-data text-muted mb-0.5">Maat</p>
+              <p className="type-data">{item.size}</p>
             </div>
           )}
           {item.color && (
-            <div className="bg-[#EDF0F5] dark:bg-[#2A2A2A] rounded-2xl px-4 py-3">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Colour</p>
-              <p className="text-sm font-black text-gray-900 dark:text-white">{item.color}</p>
+            <div className="border border-line rounded-sm px-4 py-3">
+              <p className="type-data text-muted mb-0.5">Kleur</p>
+              <p className="type-data">{item.color}</p>
             </div>
           )}
           {item.ean && (
-            <div className="bg-[#EDF0F5] dark:bg-[#2A2A2A] rounded-2xl px-4 py-3">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">EAN</p>
-              <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{item.ean}</p>
+            <div className="border border-line rounded-sm px-4 py-3">
+              <p className="type-data text-muted mb-0.5">EAN</p>
+              <p className="type-data truncate">{item.ean}</p>
             </div>
           )}
           {item.scannedAt && (
-            <div className="bg-[#EDF0F5] dark:bg-[#2A2A2A] rounded-2xl px-4 py-3">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Scanned at</p>
-              <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{item.scannedAt}</p>
+            <div className="border border-line rounded-sm px-4 py-3">
+              <p className="type-data text-muted mb-0.5">Gescand</p>
+              <p className="type-data truncate">{item.scannedAt}</p>
             </div>
           )}
         </div>
@@ -248,20 +254,20 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
             setIsFinding(false);
           }}
           disabled={isFinding}
-          className="flex items-center justify-between w-full bg-[#651610] rounded-2xl px-5 py-4 group active:bg-[#7d1e17] transition-colors disabled:opacity-60 disabled:cursor-wait"
+          className="flex items-center justify-between w-full bg-accent text-on-accent rounded-sm px-5 py-4 active:opacity-70 disabled:opacity-60 disabled:cursor-wait"
         >
-          <span className="text-white font-black text-sm">
-            {isFinding ? 'Looking up…' : 'Find online'}
+          <span className="font-medium text-sm">
+            {isFinding ? 'Zoeken' : 'Zoek online'}
           </span>
-          <ExternalLink className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+          <ExternalLink className="w-4 h-4" />
         </button>
 
         <button
           onClick={onRemove}
-          className="w-full flex items-center justify-center gap-2 py-3 text-red-400 text-sm font-bold hover:text-red-500 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 text-muted text-sm font-medium active:opacity-70"
         >
           <Trash2 className="w-4 h-4" />
-          Remove from bag
+          Verwijder uit mand
         </button>
       </div>
 
@@ -276,6 +282,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
   const [selectedItem, setSelectedItem]   = useState<CartItem | null>(null);
   const [viewerItem,   setViewerItem]     = useState<CartItem | null>(null);
   const [viewerIndex,  setViewerIndex]    = useState(0);
+  const [orderNumber,  setOrderNumber]    = useState<string | null>(null);
   const { symbol: CURRENCY_SYMBOL } = useCurrency(); // B9: user-configurable currency
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -291,10 +298,10 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
   // B3: derive scan location dynamically from cart items
   const scanLocations = [...new Set(cart.map(i => i.scannedAt).filter(Boolean))] as string[];
   const locationLabel = scanLocations.length === 0
-    ? 'In-Store Scans'
+    ? 'Gescand'
     : scanLocations.length === 1
-    ? `${scanLocations[0]} Scans`
-    : 'Multiple Location Scans';
+    ? `Gescand · ${scanLocations[0]}`
+    : 'Gescand · meerdere winkels';
 
   const openViewer = (item: CartItem, photoIndex = 0) => {
     setViewerItem(item);
@@ -309,17 +316,17 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
   // ── Empty state ──
   if (cart.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-[#EDF0F5] dark:bg-[#0F0F0F]">
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-bg text-ink">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-24 h-24 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center mb-6 shadow-sm"
+          className="w-24 h-24 border border-line rounded-full flex items-center justify-center mb-6"
         >
-          <ShoppingBag className="w-10 h-10 text-gray-200 dark:text-gray-600" />
+          <ShoppingBag className="w-10 h-10 text-muted" />
         </motion.div>
-        <h2 className="font-display text-2xl text-gray-900 dark:text-white mb-2 text-center">your bag is empty</h2>
-        <p className="text-gray-400 text-center mb-8 max-w-[240px] text-sm">
-          Scan garments in-store to add items to your bag.
+        <h2 className="text-2xl font-medium mb-2 text-center">Je mand is leeg</h2>
+        <p className="text-muted text-center mb-8 max-w-[240px] text-sm">
+          Scan kleding in de winkel om je mand te vullen.
         </p>
       </div>
     );
@@ -327,18 +334,18 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
 
   return (
     <>
-      <div className="h-full flex flex-col bg-[#EDF0F5] dark:bg-[#0F0F0F]">
+      <div className="h-full flex flex-col bg-bg text-ink">
 
-        {/* B1: Header — font-display #651610 */}
-        <div className="px-6 pt-4 pb-4 bg-[#EDF0F5] dark:bg-[#0F0F0F] sticky top-0 z-10">
-          <h1 className="font-display text-[#651610] text-4xl leading-none">your bag</h1>
-          <div className="flex items-center gap-2 mt-2">
-            {/* B2: badge — #FFC8FF bg, #651610 text */}
-            <span className="text-[10px] font-black bg-[#FFC8FF] text-[#651610] px-2.5 py-0.5 rounded-full uppercase tracking-tighter">
+        {/* B1: Header */}
+        <div className="px-6 pt-4 pb-4 bg-bg sticky top-0 z-10">
+          <h1 className="text-2xl font-medium leading-none">Winkelmand</h1>
+          <div className="flex items-center gap-3 mt-2">
+            {/* B2: item count */}
+            <span className="type-data">
               {cart.length} {cart.length === 1 ? 'item' : 'items'}
             </span>
             {/* B3: dynamic location label */}
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+            <span className="type-data text-muted">
               {locationLabel}
             </span>
           </div>
@@ -349,10 +356,10 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
           {Object.entries(groupedItems).map(([brand, items], groupIndex) => (
             <div key={brand} className="space-y-3">
 
-              {/* B7: Prominent store/brand header — font-display, #651610, larger */}
-              <div className="flex items-baseline justify-between pt-2 pb-1 border-b-2 border-[#651610]/10">
-                <h2 className="font-display text-[#651610] text-xl leading-none">{brand.toLowerCase()}</h2>
-                <span className="text-[10px] font-black text-[#651610]/50 uppercase tracking-widest">
+              {/* B7: store/brand header */}
+              <div className="flex items-baseline justify-between pt-2 pb-1 border-b border-line">
+                <h2 className="text-xl font-medium leading-none">{brand}</h2>
+                <span className="type-data text-muted">
                   {items.length} {items.length === 1 ? 'item' : 'items'}
                 </span>
               </div>
@@ -364,14 +371,14 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                     initial={{ x: -16, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: (groupIndex * 0.08) + (index * 0.04) }}
-                    className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-4 shadow-sm"
+                    className="border border-line rounded-sm p-4"
                   >
                     <div className="flex gap-3">
                       {/* B4/B5: thumbnail tap → photo viewer */}
                       <button
                         onClick={() => openViewer(item, 0)}
-                        className="w-20 h-24 bg-[#EDF0F5] dark:bg-[#2A2A2A] rounded-2xl overflow-hidden flex-shrink-0 shadow-inner active:scale-95 transition-transform"
-                        aria-label="View photos"
+                        className="w-20 h-24 border border-line rounded-sm overflow-hidden flex-shrink-0 active:opacity-70"
+                        aria-label="Bekijk foto's"
                       >
                         <img
                           src={item.image}
@@ -381,7 +388,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                         {/* Photo count badge */}
                         {item.photos && item.photos.length > 1 && (
                           <div className="relative">
-                            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                            <span className="absolute bottom-1 right-1 bg-ink text-bg font-mono text-[8px] px-1.5 py-0.5 rounded-sm">
                               1/{item.photos.length}
                             </span>
                           </div>
@@ -393,32 +400,34 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                         className="flex-1 flex flex-col py-0.5 text-left"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <p className="text-[9px] font-black text-[#651610] uppercase tracking-widest">{item.brand}</p>
-                        <h3 className="font-black text-gray-900 dark:text-white text-sm leading-tight mt-0.5 line-clamp-2">{item.name}</h3>
-                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">
-                          {[item.size && `Size ${item.size}`, item.color].filter(Boolean).join(' · ')}
+                        <p className="type-data text-muted">{item.brand}</p>
+                        <h3 className="font-medium text-sm leading-tight mt-0.5 line-clamp-2">{item.name}</h3>
+                        <p className="type-data text-muted mt-1">
+                          {[item.size && `Maat ${item.size}`, item.color].filter(Boolean).join(' · ')}
                         </p>
 
                         <div className="mt-auto flex items-center justify-between pt-3">
-                          <span className="text-base font-black text-gray-900 dark:text-white">
+                          <span className="text-base font-medium tabular-nums">
                             {CURRENCY_SYMBOL}{item.price.toFixed(2)}
                           </span>
 
-                          {/* B10: quantity controls — #651610 */}
+                          {/* B10: quantity controls */}
                           <div
-                            className="flex items-center border border-[#651610]/30 rounded-full px-1"
+                            className="flex items-center border border-line rounded-sm px-1"
                             onClick={e => e.stopPropagation()}
                           >
                             <button
                               onClick={() => item.dbId && onUpdateQuantity(item.dbId, item.quantity - 1)}
-                              className="w-7 h-7 flex items-center justify-center text-[#651610] hover:text-[#7d1e17]"
+                              aria-label="Minder"
+                              className="w-7 h-7 flex items-center justify-center active:opacity-70"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
-                            <span className="w-6 text-center text-xs font-black text-gray-900 dark:text-white">{item.quantity}</span>
+                            <span className="w-6 text-center font-mono text-xs">{item.quantity}</span>
                             <button
                               onClick={() => item.dbId && onUpdateQuantity(item.dbId, item.quantity + 1)}
-                              className="w-7 h-7 flex items-center justify-center text-[#651610] hover:text-[#7d1e17]"
+                              aria-label="Meer"
+                              className="w-7 h-7 flex items-center justify-center active:opacity-70"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
@@ -435,18 +444,20 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
         </div>
 
         {/* Checkout summary */}
-        <div className="px-6 py-5 bg-white dark:bg-[#1A1A1A] rounded-t-[32px] shadow-[0_-16px_40px_rgba(0,0,0,0.06)] flex-shrink-0">
-          <div className="flex justify-between items-center mb-5">
-            <span className="text-base font-bold text-gray-500 dark:text-gray-400">Total</span>
-            <span className="font-display text-[#651610] text-3xl leading-none">
+        <div className="px-6 py-5 bg-bg border-t border-line flex-shrink-0">
+          <div className="flex justify-between items-end mb-5">
+            <span className="type-data text-muted">Totaal</span>
+            <span className="type-hero tabular-nums">
               {CURRENCY_SYMBOL}{subtotal.toFixed(2)}
             </span>
           </div>
           <Button
-            disabled
-            className="w-full h-14 rounded-2xl bg-gray-200 dark:bg-[#2A2A2A] text-gray-400 dark:text-gray-500 font-black text-base cursor-not-allowed shadow-none"
+            disabled={!CHECKOUT_PREVIEW}
+            onClick={() => setOrderNumber(`UT-${Date.now().toString().slice(-6)}`)}
+            className="w-full h-14 text-base disabled:cursor-not-allowed"
           >
-            Checkout <span className="ml-1.5 text-xs font-bold opacity-60">(coming soon)</span>
+            Koop
+            {!CHECKOUT_PREVIEW && <span className="ml-1.5 text-xs font-normal">(binnenkort)</span>}
           </Button>
         </div>
       </div>
@@ -469,6 +480,17 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
             item={selectedItem}
             onClose={() => setSelectedItem(null)}
             onRemove={() => handleRemoveFromDetail(selectedItem.dbId)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* The blue moment */}
+      <AnimatePresence>
+        {orderNumber && (
+          <PurchaseConfirmation
+            orderNumber={orderNumber}
+            deliveryLine="Thuis morgen"
+            onClose={() => setOrderNumber(null)}
           />
         )}
       </AnimatePresence>

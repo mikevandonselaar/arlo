@@ -3,6 +3,7 @@ import { MapPin, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import HomeCarousel from './HomeCarousel';
+import { Wordmark } from './Wordmark';
 import { addToWaitlist } from '../lib/auth';
 
 interface HomePageProps {
@@ -26,7 +27,7 @@ function JoinModal({ onClose }: { onClose: () => void }) {
       await addToWaitlist(email);
       setDone(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not save email');
+      toast.error(err instanceof Error ? err.message : 'E-mail opslaan lukt niet');
     } finally {
       setSubmitting(false);
     }
@@ -37,8 +38,7 @@ function JoinModal({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-end justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+      className="fixed inset-0 z-[200] flex items-end justify-center bg-ink/45"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
@@ -46,14 +46,18 @@ function JoinModal({ onClose }: { onClose: () => void }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="w-full bg-white dark:bg-[#1A1A1A] rounded-t-[32px] px-6 pt-6 pb-10"
+        className="relative w-full bg-bg text-ink border-t border-line px-6 pt-6 pb-10"
       >
         {/* Handle + close */}
         <div className="flex items-center justify-between mb-6">
-          <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
+          <div className="w-10 h-1 bg-line mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
           <div />
-          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#EDF0F5] dark:bg-[#2A2A2A] flex items-center justify-center ml-auto">
-            <X className="w-4 h-4 text-gray-500" />
+          <button
+            onClick={onClose}
+            aria-label="Sluit"
+            className="w-9 h-9 rounded-sm border border-line flex items-center justify-center ml-auto active:opacity-70"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -65,18 +69,19 @@ function JoinModal({ onClose }: { onClose: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-4"
             >
-              <div className="w-14 h-14 rounded-full bg-[#FFC8FF] flex items-center justify-center mx-auto mb-4">
-                <span className="font-display text-[#651610] text-2xl">a.</span>
-              </div>
-              <p className="font-black text-[#651610] text-xl mb-2">you're in.</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                We've saved your email. Welcome to arlo.
+              <p className="type-data flex items-center justify-center gap-2 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                Aangemeld
+              </p>
+              <p className="font-medium text-xl mb-2">Je doet mee.</p>
+              <p className="text-sm text-muted leading-relaxed">
+                Je e-mail is opgeslagen. Welkom bij utan.
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 w-full h-12 rounded-2xl bg-[#651610] text-white font-black text-sm active:opacity-80 transition-opacity"
+                className="mt-6 w-full h-12 rounded-sm bg-accent text-on-accent font-medium text-sm active:opacity-70"
               >
-                Start scanning →
+                Start met scannen
               </button>
             </motion.div>
           ) : (
@@ -86,33 +91,33 @@ function JoinModal({ onClose }: { onClose: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               onSubmit={handleSubmit}
             >
-              <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest mb-2">join arlo.</p>
-              <h2 className="font-display text-gray-900 dark:text-white text-2xl leading-tight mb-1">
-                stay in the loop.
+              <p className="type-data text-muted mb-2">Meedoen</p>
+              <h2 className="text-2xl font-medium leading-tight mb-1">
+                Blijf op de hoogte.
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                Leave your email and we'll keep you posted on new stores, features, and drops.
+              <p className="text-sm text-muted mb-6 leading-relaxed">
+                Laat je e-mail achter voor nieuws over nieuwe winkels en functies.
               </p>
 
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 block mb-1.5">
-                Email address
+              <label className="type-data text-muted ml-1 block mb-1.5">
+                E-mailadres
               </label>
               <input
                 ref={inputRef}
                 type="email"
                 required
-                placeholder="name@example.com"
+                placeholder="naam@voorbeeld.nl"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full h-12 rounded-2xl bg-[#EDF0F5] dark:bg-[#2A2A2A] px-4 text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-300 border-none outline-none mb-4"
+                className="w-full h-12 rounded-sm border border-ink/30 bg-transparent px-4 text-sm text-ink placeholder:text-muted outline-none focus:border-ink mb-4"
               />
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full h-12 rounded-2xl bg-[#651610] text-white font-black text-sm flex items-center justify-center gap-2 active:opacity-80 transition-opacity disabled:opacity-60"
+                className="w-full h-12 rounded-sm bg-accent text-on-accent font-medium text-sm flex items-center justify-center gap-2 active:opacity-70 disabled:opacity-60"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join arlo. →'}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Meedoen'}
               </button>
             </motion.form>
           )}
@@ -147,20 +152,20 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
 
   return (
     <>
-      <div className="h-full bg-[#EDF0F5] dark:bg-[#0F0F0F] flex flex-col">
+      <div className="h-full bg-bg text-ink flex flex-col">
 
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0 border-b border-line">
           <div className="flex items-center gap-2">
-            <span className="font-display text-[#651610] text-2xl leading-none">arlo.</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#FFC8FF] text-[#651610] text-[9px] font-black tracking-widest uppercase">
+            <Wordmark className="text-2xl" />
+            <span className="type-data text-muted border border-line rounded-sm px-1.5">
               alpha
             </span>
           </div>
-          <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A1A1A] rounded-full pl-2.5 pr-3.5 py-1.5 shadow-sm">
-            <MapPin className="w-3.5 h-3.5 text-[#651610] flex-shrink-0" />
-            <span className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-none">
-              {city ?? 'Locating…'}
+          <div className="flex items-center gap-1.5 border border-line rounded-sm pl-2.5 pr-3.5 py-1.5">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="type-data">
+              {city ?? 'Zoeken'}
             </span>
           </div>
         </div>

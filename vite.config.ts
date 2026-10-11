@@ -13,11 +13,12 @@ export default defineConfig({
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
 
       manifest: {
-        name: 'Arlo',
-        short_name: 'Arlo',
-        description: 'In-store shopping redefined by KODA',
-        theme_color: '#000000',
-        background_color: '#ffffff',
+        name: 'utan',
+        short_name: 'utan',
+        description: 'Winkelen zonder gedoe. Scan in de winkel, utan brengt het thuis.',
+        lang: 'nl',
+        theme_color: '#F7F6F2',
+        background_color: '#F7F6F2',
         display: 'standalone',
         start_url: '/',
         icons: [
@@ -40,8 +41,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            // Cache Supabase auth/data requests with network-first strategy
-            urlPattern: ({ url }) => url.hostname.includes('supabase.co'),
+            // Cache alleen data-verzoeken — inlog-verzoeken NOOIT cachen,
+            // anders breekt Google-login met "bad_oauth_state"-fouten.
+            urlPattern: ({ url }) =>
+              url.hostname.includes('supabase.co') && !url.pathname.startsWith('/auth/'),
             handler: 'NetworkFirst',
             options: { cacheName: 'supabase-cache', networkTimeoutSeconds: 5 },
           },

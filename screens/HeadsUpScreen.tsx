@@ -7,70 +7,51 @@ interface Props {
 }
 
 const DISCLAIMERS = [
-  'Not all garments can be found online.',
-  'Prices may need manual correction.',
-  'Works with retailers that sell online only.',
-  'Payments not in app yet — coming soon.',
-  'Delivery handled by retailer directly.',
+  'Niet elk kledingstuk is online te vinden.',
+  'Prijzen moet je soms zelf aanpassen.',
+  'Werkt alleen met winkels die online verkopen.',
+  'Betalen kan nog niet in de app.',
+  'De winkel verzorgt de bezorging.',
+  'Dit is een vroege alpha. Niet alles werkt al goed.',
 ];
 
 export default function HeadsUpScreen({ onBack }: Props) {
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#EDF0F5] overflow-y-auto">
+    <div className="flex-1 flex flex-col bg-bg text-ink overflow-y-auto">
       <div className="p-5 pb-10">
 
         {/* Back */}
         <button
           onClick={onBack}
-          className="mb-4 text-[12px] active:opacity-50 transition-opacity"
-          style={{ color: 'rgba(101,22,16,0.5)' }}
+          className="mb-4 text-xs text-muted active:opacity-70"
         >
-          ← back
+          ← Terug
         </button>
 
         {/* Eyebrow */}
-        <p
-          className="text-[9px] font-bold lowercase mb-[6px]"
-          style={{ color: 'rgba(101,22,16,0.5)', letterSpacing: '0.72px' }}
-        >
-          heads up.
+        <p className="type-data text-muted mb-[6px]">
+          Goed om te weten
         </p>
 
         {/* Heading */}
-        <h1 className="text-[22px] font-black leading-[28px] mb-[10px]" style={{ color: '#651610' }}>
-          alpha means rough edges.
+        <h1 className="text-[22px] font-medium leading-[28px] mb-[10px]">
+          Alpha: nog niet alles werkt.
         </h1>
 
         {/* Subtext */}
-        <p
-          className="text-[11px] leading-[17px] mb-4"
-          style={{ color: 'rgba(101,22,16,0.65)' }}
-        >
-          We're still building. Things might break, look weird, or not work at all.
+        <p className="text-[11px] leading-[17px] text-muted mb-4">
+          Er wordt nog gebouwd. Dingen kunnen stukgaan, er vreemd uitzien of niet werken.
         </p>
 
         {/* Disclaimer block */}
-        <div
-          className="rounded-[10px] p-3 mb-4"
-          style={{ backgroundColor: 'rgba(101,22,16,0.04)' }}
-        >
+        <div className="border border-line rounded-sm p-3 mb-4">
           {DISCLAIMERS.map((item) => (
-            <p
-              key={item}
-              className="text-[10px] leading-[18px]"
-              style={{ color: 'rgba(101,22,16,0.72)' }}
-            >
+            <p key={item} className="text-[10px] leading-[18px] text-muted">
               · {item}
             </p>
           ))}
-          <p
-            className="text-[10px] leading-[18px] italic mt-1"
-            style={{ color: 'rgba(101,22,16,0.55)' }}
-          >
-            · This is early alpha — rough edges expected.
-          </p>
         </div>
 
         {/* What's new — collapsible; hidden when empty */}
@@ -78,16 +59,16 @@ export default function HeadsUpScreen({ onBack }: Props) {
           <>
             <button
               onClick={() => setWhatsNewOpen(o => !o)}
-              className="w-full text-left rounded-[8px] p-[10px] mb-2 bg-[#F5F6F8]"
+              className="w-full text-left border border-line rounded-sm p-[10px] mb-2"
             >
-              <span className="text-[11px] font-semibold" style={{ color: '#651610' }}>
-                {whatsNewOpen ? '▾' : '▸'} what's new
+              <span className="text-[11px] font-medium">
+                {whatsNewOpen ? '▾' : '▸'} Nieuw
               </span>
             </button>
             {whatsNewOpen && (
               <div className="px-[10px] mb-4">
                 {WHATS_NEW.map((item) => (
-                  <p key={item} className="text-[11px]" style={{ color: 'rgba(101,22,16,0.5)' }}>
+                  <p key={item} className="text-[11px] text-muted">
                     · {item}
                   </p>
                 ))}
@@ -97,15 +78,14 @@ export default function HeadsUpScreen({ onBack }: Props) {
         )}
 
         {/* CTA */}
-        <div className="rounded-[12px] p-3 mt-2 bg-[#EDF0F5]">
+        <div className="mt-2">
           <a
-            href="mailto:?subject=Arlo%20feedback"
+            href="mailto:?subject=utan%20feedback"
             /* TODO-VOLGENDE-FASE: koppel aan feedback-formulier of mailto */
-            className="flex items-center justify-center rounded-[10px] py-[13px] active:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#651610' }}
+            className="flex items-center justify-center rounded-sm bg-accent text-on-accent py-[13px] active:opacity-70"
           >
-            <span className="text-[13px] font-bold" style={{ color: '#FFC8FF' }}>
-              Send Feedback →
+            <span className="text-[13px] font-medium">
+              Stuur feedback
             </span>
           </a>
         </div>

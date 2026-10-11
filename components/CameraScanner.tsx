@@ -28,12 +28,23 @@ const MOCK_EXTRACTION: LabelExtraction = {
 
 // S4: Ordered 3-photo flow — recommended but not enforced
 const PHOTO_STEPS = [
-  { label: 'GARMENT',  instruction: 'Take a photo of the garment',         phase: 'GARMENT PHOTO' },
-  { label: 'EAN CODE', instruction: 'Take a photo of the EAN / barcode',    phase: 'EAN CODE PHOTO' },
-  { label: 'LABEL',    instruction: 'Take a photo of the label / brand tag', phase: 'LABEL PHOTO' },
+  { label: 'Kledingstuk', instruction: 'Maak een foto van het kledingstuk',       phase: 'Foto kledingstuk' },
+  { label: 'EAN',         instruction: 'Maak een foto van de EAN / barcode',      phase: 'Foto EAN' },
+  { label: 'Label',       instruction: 'Maak een foto van het label / merklabel', phase: 'Foto label' },
 ] as const;
 
 const MAX_PHOTOS = PHOTO_STEPS.length;
+
+const DEFAULT_STORE = 'In de winkel';
+
+// Viewfinder corners. On recognition they click inwards by CORNER_SNAP px.
+const CORNER_SNAP = 10;
+const CORNERS = [
+  { position: 'top-0 left-0',     border: 'border-t-2 border-l-2', x:  1, y:  1 },
+  { position: 'top-0 right-0',    border: 'border-t-2 border-r-2', x: -1, y:  1 },
+  { position: 'bottom-0 left-0',  border: 'border-b-2 border-l-2', x:  1, y: -1 },
+  { position: 'bottom-0 right-0', border: 'border-b-2 border-r-2', x: -1, y: -1 },
+] as const;
 
 interface EditState {
   name: string;
@@ -68,7 +79,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         if (videoRef.current) videoRef.current.srcObject = stream;
       })
       .catch(() => {
-        toast.error('Camera access denied');
+        toast.error('Geen toegang tot de camera');
         setIsScanning(false);
       });
     return () => {
@@ -120,7 +131,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         articleCode: extraction.articleCode ?? undefined,
         size:      extraction.size ?? undefined,
         color:     extraction.color ?? undefined,
-        scannedAt: 'In-Store Scan',
+        scannedAt: DEFAULT_STORE,
         shippedBy: extraction.brand,
       };
       setScannedProduct(product);
@@ -131,10 +142,12 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         size:      product.size  ?? '',
         color:     product.color ?? '',
         ean:       product.ean   ?? '',
-        scannedAt: product.scannedAt ?? 'In-Store Scan',
+        scannedAt: product.scannedAt ?? DEFAULT_STORE,
       });
+      // Recognised — short haptic tick where the device supports it
+      navigator.vibrate?.(10);
     } catch {
-      toast.error('Could not read label — try better lighting or a closer shot.');
+      toast.error('Label niet leesbaar. Probeer meer licht of ga dichterbij.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -170,52 +183,55 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
   // Derive current step labels from photo count
   const nextStep   = PHOTO_STEPS[capturedPhotos.length];
-  const phaseLabel = capturedPhotos.length >= MAX_PHOTOS
-    ? 'READY TO ANALYSE'
-    : nextStep?.phase ?? 'READY TO ANALYSE';
+  const recognised = scannedProduct !== null;
+  const phaseLabel = recognised
+    ? 'Gescand'
+    : capturedPhotos.length >= MAX_PHOTOS
+    ? 'Klaar voor analyse'
+    : nextStep?.phase ?? 'Klaar voor analyse';
 
   // Price validation for the confirm button (A3 — applied here too for consistency)
   const priceValue   = parseFloat(editState?.price ?? '');
   const priceInvalid = !editState?.price || isNaN(priceValue) || priceValue <= 0;
 
   return (
-    <div className="relative h-full bg-black overflow-hidden">
+    <div className="relative h-full bg-ink overflow-hidden">
 
       {/* ── Idle screen ── */}
       {!isScanning ? (
-        <div className="h-full flex flex-col items-center justify-center p-8 text-white bg-[#0F0F0F]">
+        <div className="h-full flex flex-col items-center justify-center p-8 text-ink bg-bg">
 
           {/* DEV MODE badge */}
           {DEV_MOCK_SCAN && (
-            <div className="absolute top-6 right-6 bg-[#FFC8FF] text-[#651610] text-[9px] font-black px-3 py-1 rounded-full tracking-widest uppercase">
-              DEV MOCK
+            <div className="absolute top-6 right-6 border border-ink type-data px-3 py-1 rounded-sm">
+              Dev mock
             </div>
           )}
 
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-32 h-32 bg-[#651610]/10 rounded-full flex items-center justify-center mb-8 border border-[#651610]/30"
+            className="w-32 h-32 rounded-full flex items-center justify-center mb-8 border border-line"
           >
-            <Camera className="w-16 h-16 text-[#651610]" />
+            <Camera className="w-16 h-16" />
           </motion.div>
 
           {/* S1: title */}
-          <h2 className="font-display text-3xl mb-4">scan garment</h2>
+          <h2 className="type-hero mb-6">Scan</h2>
 
           {/* S2: instruction text */}
-          <p className="text-gray-400 text-center mb-12 max-w-xs leading-relaxed text-sm">
+          <p className="text-muted text-center mb-12 max-w-xs leading-relaxed text-sm">
             {DEV_MOCK_SCAN
-              ? 'Dev mode active — returns mock Adidas Yeezy data instantly.'
-              : 'Follow the instructions after opening your camera.'}
+              ? 'Dev-modus actief. Geeft direct mockdata van een Adidas Yeezy terug.'
+              : 'Open de camera en volg de stappen.'}
           </p>
 
           {/* S3: Start button */}
           <Button
             onClick={() => setIsScanning(true)}
-            className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black w-full h-14 rounded-2xl mb-3 text-lg"
+            className="w-full h-14 mb-3 text-lg"
           >
-            Start Camera
+            Start camera
           </Button>
 
           {/* DEV shortcut — skip camera entirely */}
@@ -223,17 +239,17 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             <Button
               onClick={handleAnalyse}
               variant="outline"
-              className="w-full h-12 rounded-2xl border-2 border-[#FFC8FF] text-[#FFC8FF] font-black text-sm bg-transparent hover:bg-[#FFC8FF]/10 flex items-center justify-center gap-2"
+              className="w-full h-12 text-sm"
             >
               <Sparkles className="w-4 h-4" />
-              Skip camera — use mock data
+              Sla camera over, gebruik mockdata
             </Button>
           )}
 
           {/* S3: updated subtitle */}
           {!DEV_MOCK_SCAN && (
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mt-4">
-              Point at the garment
+            <p className="type-data text-muted mt-4">
+              Richt op het kledingstuk
             </p>
           )}
         </div>
@@ -250,22 +266,27 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             className="w-full h-full object-cover opacity-70"
           />
 
-          <div className="absolute inset-0 flex flex-col">
+          <div className="absolute inset-0 flex flex-col text-on-accent">
 
             {/* Header */}
             <div className="p-6 flex justify-between items-center z-20 flex-shrink-0">
               <button
                 onClick={stopCamera}
-                className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white"
+                aria-label="Sluit camera"
+                className="w-12 h-12 bg-ink/40 rounded-sm flex items-center justify-center active:opacity-70"
               >
                 <X className="w-6 h-6" />
               </button>
 
-              <span className="text-white text-[10px] font-black tracking-widest">
+              <span className="type-data flex items-center gap-2">
+                {recognised && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
                 {phaseLabel}
               </span>
 
-              <button className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+              <button
+                aria-label="Zaklamp"
+                className="w-12 h-12 bg-ink/40 rounded-sm flex items-center justify-center active:opacity-70"
+              >
                 <Flashlight className="w-6 h-6" />
               </button>
             </div>
@@ -277,18 +298,18 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                   <div key={i} className="relative">
                     <img
                       src={photo}
-                      alt={PHOTO_STEPS[i]?.label ?? `Photo ${i + 1}`}
-                      className="w-16 h-20 object-cover rounded-xl border-2 border-[#FFC8FF]"
+                      alt={PHOTO_STEPS[i]?.label ?? `Foto ${i + 1}`}
+                      className="w-16 h-20 object-cover rounded-sm border border-on-accent"
                     />
                     <button
                       onClick={() => removePhoto(i)}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center border border-white/30"
-                      aria-label="Remove photo"
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-ink rounded-full flex items-center justify-center border border-on-accent/30"
+                      aria-label="Verwijder foto"
                     >
-                      <X className="w-3 h-3 text-white" />
+                      <X className="w-3 h-3" />
                     </button>
-                    <span className="absolute bottom-1 left-1 text-[8px] font-black text-white bg-black/60 px-1 rounded">
-                      {PHOTO_STEPS[i]?.label ?? `PHOTO ${i + 1}`}
+                    <span className="absolute bottom-1 left-1 font-mono text-[8px] uppercase bg-ink/60 px-1 rounded-sm">
+                      {PHOTO_STEPS[i]?.label ?? `Foto ${i + 1}`}
                     </span>
                   </div>
                 ))}
@@ -298,20 +319,27 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             {/* Instruction + scan frame */}
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
               {!isAnalyzing && nextStep && capturedPhotos.length < MAX_PHOTOS && (
-                <p className="text-white text-xs font-bold tracking-wide px-6 py-2 bg-black/40 backdrop-blur-md rounded-full">
+                <p className="text-xs font-medium px-4 py-2 bg-ink/40 rounded-sm">
                   {nextStep.instruction}
                 </p>
               )}
 
-              {/* S7: Scan frame — #FFC8FF corners */}
+              {/* S7: Viewfinder — four accent corners that click inwards on recognition */}
               <div className="w-56 h-72 relative">
-                <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#FFC8FF] rounded-tl-2xl" />
-                <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#FFC8FF] rounded-tr-2xl" />
-                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-[#FFC8FF] rounded-bl-2xl" />
-                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-[#FFC8FF] rounded-br-2xl" />
+                {CORNERS.map(corner => (
+                  <motion.div
+                    key={corner.position}
+                    className={`absolute w-10 h-10 border-accent ${corner.position} ${corner.border}`}
+                    animate={{
+                      x: recognised ? corner.x * CORNER_SNAP : 0,
+                      y: recognised ? corner.y * CORNER_SNAP : 0,
+                    }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                  />
+                ))}
                 {isAnalyzing && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="w-10 h-10 text-[#FFC8FF] animate-spin" />
+                    <Loader2 className="w-10 h-10 animate-spin" />
                   </div>
                 )}
               </div>
@@ -321,8 +349,8 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             {isAnalyzing ? (
 
               <div className="p-8 pb-12 flex flex-col items-center gap-3 z-20">
-                <p className="text-white font-bold tracking-widest uppercase text-xs opacity-80">
-                  Analysing garment…
+                <p className="type-data">
+                  Analyseren
                 </p>
               </div>
 
@@ -332,10 +360,10 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               <div className="p-6 pb-12 z-20 flex flex-col items-center gap-4">
                 <Button
                   onClick={handleAnalyse}
-                  className="bg-[#651610] hover:bg-[#7d1e17] text-white font-black h-14 rounded-2xl text-base flex items-center justify-center gap-2 w-full"
+                  className="h-14 text-base w-full"
                 >
                   <Sparkles className="w-5 h-5" />
-                  Analyse Garment
+                  Analyseer
                 </Button>
               </div>
 
@@ -345,17 +373,17 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               <div className="p-8 pb-12 flex flex-col items-center gap-4 z-20">
                 <button
                   onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
-                  aria-label="Capture photo"
+                  className="w-20 h-20 rounded-full border-4 border-on-accent flex items-center justify-center active:opacity-70"
+                  aria-label="Maak foto"
                 >
-                  <div className="w-14 h-14 rounded-full bg-white" />
+                  <div className="w-14 h-14 rounded-full bg-on-accent" />
                 </button>
                 {DEV_MOCK_SCAN && (
                   <button
                     onClick={handleAnalyse}
-                    className="flex items-center gap-1.5 text-[#FFC8FF] text-xs font-black tracking-widest uppercase"
+                    className="flex items-center gap-1.5 type-data"
                   >
-                    <Sparkles className="w-3.5 h-3.5" /> Use mock data
+                    <Sparkles className="w-3.5 h-3.5" /> Gebruik mockdata
                   </button>
                 )}
               </div>
@@ -371,81 +399,79 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute inset-x-0 bottom-0 bg-white dark:bg-[#1A1A1A] rounded-t-[40px] z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[90%] flex flex-col"
+            // Starts just after the corners have clicked in
+            transition={{ type: 'spring', damping: 25, stiffness: 200, delay: 0.18 }}
+            className="absolute inset-x-0 bottom-0 bg-bg text-ink border-t border-line z-50 max-h-[90%] flex flex-col"
           >
             <div className="pt-5 pb-2 flex-shrink-0">
-              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto" />
+              <div className="w-12 h-1 bg-line mx-auto" />
             </div>
 
             <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4 space-y-5">
 
               {/* A1: "GARMENT DETAILS" label */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-[#2A2A2A] rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
-                  <img src={scannedProduct.image} alt="Garment" className="w-full h-full object-cover" />
+                <div className="w-16 h-16 border border-line rounded-sm overflow-hidden flex-shrink-0">
+                  <img src={scannedProduct.image} alt="Kledingstuk" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-[#651610] uppercase tracking-widest mb-0.5">
-                    Garment Details
+                  <p className="type-data flex items-center gap-2 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Gescand
                   </p>
                   {/* A2: prominent subtitle */}
-                  <p className="text-xs font-black text-[#651610] leading-snug">
-                    Correct anything before adding to bag.
+                  <p className="text-xs text-muted leading-snug">
+                    Controleer de gegevens en pas aan waar nodig.
                   </p>
                 </div>
               </div>
 
               {/* Name */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Product Name</Label>
+                <Label className="ml-1">Productnaam</Label>
                 <Input
                   value={editState.name}
                   onChange={e => setEditState(s => s && ({ ...s, name: e.target.value }))}
-                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                  className="h-12"
                 />
               </div>
 
               {/* Brand */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Brand</Label>
+                <Label className="ml-1">Merk</Label>
                 <Input
                   value={editState.brand}
                   onChange={e => setEditState(s => s && ({ ...s, brand: e.target.value }))}
-                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                  className="h-12"
                 />
               </div>
 
               {/* Price + Size */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className={`font-bold text-[10px] uppercase tracking-widest ml-1 ${priceInvalid ? 'text-[#651610]' : 'text-gray-500'}`}>
-                    {priceInvalid ? '⚠ Price required' : `Price (${currencySymbol})`}
+                  <Label className={`ml-1 ${priceInvalid ? 'text-ink' : ''}`}>
+                    {priceInvalid ? 'Prijs verplicht' : `Prijs (${currencySymbol})`}
                   </Label>
-                  {/* A3: red border when price is empty/zero */}
+                  {/* A3: heavy border when price is empty/zero */}
                   <Input
                     type="number"
                     inputMode="decimal"
                     placeholder="0.00"
                     value={editState.price}
                     onChange={e => setEditState(s => s && ({ ...s, price: e.target.value }))}
-                    className={`h-12 rounded-2xl shadow-none bg-[#EDF0F5] dark:bg-[#2A2A2A] text-gray-900 dark:text-white ${
-                      priceInvalid
-                        ? 'border-2 border-[#651610]'
-                        : 'border-transparent'
-                    }`}
+                    className={`h-12 ${priceInvalid ? 'border-2 border-ink' : ''}`}
                   />
                   {priceInvalid && (
-                    <p className="text-[9px] font-bold text-[#651610] ml-1">Please check and fill in the price</p>
+                    <p className="text-[10px] text-ink ml-1">Vul de prijs in</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Size</Label>
+                  <Label className="ml-1">Maat</Label>
                   <Input
-                    placeholder="e.g. M"
+                    placeholder="bv. M"
                     value={editState.size}
                     onChange={e => setEditState(s => s && ({ ...s, size: e.target.value }))}
-                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                    className="h-12"
                   />
                 </div>
               </div>
@@ -453,53 +479,53 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               {/* Color + EAN */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Colour</Label>
+                  <Label className="ml-1">Kleur</Label>
                   <Input
-                    placeholder="e.g. Black"
+                    placeholder="bv. Zwart"
                     value={editState.color}
                     onChange={e => setEditState(s => s && ({ ...s, color: e.target.value }))}
-                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                    className="h-12"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">EAN / Barcode</Label>
+                  <Label className="ml-1">EAN / barcode</Label>
                   <Input
-                    placeholder="e.g. 1234567890123"
+                    placeholder="bv. 1234567890123"
                     value={editState.ean}
                     onChange={e => setEditState(s => s && ({ ...s, ean: e.target.value }))}
-                    className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                    className="h-12 font-mono"
                   />
                 </div>
               </div>
 
               {/* Store name */}
               <div className="space-y-1.5">
-                <Label className="text-gray-500 font-bold text-[10px] uppercase tracking-widest ml-1">Store Name</Label>
+                <Label className="ml-1">Winkel</Label>
                 <Input
-                  placeholder="e.g. Nike, Oxford St"
+                  placeholder="bv. Nike, Kalverstraat"
                   value={editState.scannedAt}
                   onChange={e => setEditState(s => s && ({ ...s, scannedAt: e.target.value }))}
-                  className="bg-[#EDF0F5] dark:bg-[#2A2A2A] border-transparent text-gray-900 dark:text-white h-12 rounded-2xl shadow-none"
+                  className="h-12"
                 />
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 pt-1">
-                {/* A6: Cancel — outline #651610 */}
+                {/* A6: Cancel — outline */}
                 <Button
                   variant="outline"
                   onClick={handleCancelProduct}
-                  className="flex-1 h-14 rounded-2xl border-2 border-[#651610] text-[#651610] font-bold bg-transparent hover:bg-[#651610]/5"
+                  className="flex-1 h-14"
                 >
-                  Cancel
+                  Annuleer
                 </Button>
                 {/* A3/A5: disabled when price invalid */}
                 <Button
                   onClick={handleConfirm}
                   disabled={priceInvalid}
-                  className="flex-[2] h-14 rounded-2xl bg-[#651610] hover:bg-[#7d1e17] text-white font-black disabled:bg-[#CCCCCC] disabled:cursor-not-allowed"
+                  className="flex-[2] h-14 disabled:cursor-not-allowed"
                 >
-                  Looks good →
+                  In mand
                 </Button>
               </div>
             </div>

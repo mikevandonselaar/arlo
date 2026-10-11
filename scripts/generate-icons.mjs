@@ -1,140 +1,85 @@
 /**
  * generate-icons.mjs
- * Generates placeholder PWA icons with zero npm dependencies.
- * Uses only Node.js built-ins: zlib (PNG compression), fs, path.
+ * Generates the temporary utan icons from the self-hosted Familjen Grotesk font.
  *
  * Output:
+ *   public/favicon.svg         — white "U" on accent
+ *   public/favicon.png         — 64×64
  *   public/icons/icon-192.png  — 192×192
- *   public/icons/icon-512.png  — 512×512
+ *   public/icons/icon-512.png  — 512×512 (maskable: glyph stays inside the safe zone)
+ *   public/og-image.png        — 1200×630, "UTAN" wordmark in ink on bg
  *
- * Design: #51EAA7 (green) background, white "H" lettermark.
+ * The colours mirror the tokens in styles/globals.css — keep them in sync.
+ * When the final logo exists, replace this script's output with exported files.
  *
  * Usage: node scripts/generate-icons.mjs
  */
 
-import { deflateSync } from 'zlib';
-import { writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import opentype from 'opentype.js';
+import { Resvg } from '@resvg/resvg-js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, '..');
 
-// ─── CRC32 (IEEE 802.3 polynomial) ───────────────────────────────────────────
+const ACCENT    = '#1F2BFF';
+const ON_ACCENT = '#FFFFFF';
+const BG        = '#F7F6F2';
+const INK       = '#0B0B0B';
 
-const CRC_TABLE = (() => {
-  const t = new Uint32Array(256);
-  for (let i = 0; i < 256; i++) {
-    let c = i;
-    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    t[i] = c;
-  }
-  return t;
-})();
-
-function crc32(buf) {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-// ─── PNG encoder ─────────────────────────────────────────────────────────────
-
-function pngChunk(type, data) {
-  const typeBuf  = Buffer.from(type, 'ascii');
-  const lenBuf   = Buffer.allocUnsafe(4);
-  const crcBuf   = Buffer.allocUnsafe(4);
-  lenBuf.writeUInt32BE(data.length, 0);
-  crcBuf.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0);
-  return Buffer.concat([lenBuf, typeBuf, data, crcBuf]);
-}
+const fontFile = join(root, 'node_modules/@fontsource/familjen-grotesk/files/familjen-grotesk-latin-500-normal.woff');
+const fontBuffer = readFileSync(fontFile);
+const font = opentype.parse(fontBuffer.buffer.slice(fontBuffer.byteOffset, fontBuffer.byteOffset + fontBuffer.byteLength));
 
 /**
- * Encodes a raw RGBA pixel array (Uint8Array, width×height×4 bytes) into a
- * valid PNG buffer using RGB color type + zlib DEFLATE compression.
+ * Lays out `text` glyph by glyph (letterSpacing in em) starting at x, y.
+ * Done by hand because opentype.js can't run this font's GSUB features.
  */
-function encodePNG(width, height, rgba) {
-  // Build raw scanlines: one filter byte (0 = None) then RGB triplets per row
-  const raw = Buffer.allocUnsafe(height * (1 + width * 3));
-  for (let y = 0; y < height; y++) {
-    raw[y * (1 + width * 3)] = 0; // filter: None
-    for (let x = 0; x < width; x++) {
-      const pi = (y * width + x) * 4;
-      const ri = y * (1 + width * 3) + 1 + x * 3;
-      raw[ri]     = rgba[pi];
-      raw[ri + 1] = rgba[pi + 1];
-      raw[ri + 2] = rgba[pi + 2];
-    }
+function textPath(text, x, y, fontSize, letterSpacing) {
+  const scale = fontSize / font.unitsPerEm;
+  const path = new opentype.Path();
+  for (const char of text) {
+    const glyph = font.charToGlyph(char);
+    path.extend(glyph.getPath(x, y, fontSize));
+    x += glyph.advanceWidth * scale + letterSpacing * fontSize;
   }
-
-  const ihdr = Buffer.allocUnsafe(13);
-  ihdr.writeUInt32BE(width,  0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8]  = 8; // bit depth
-  ihdr[9]  = 2; // color type: RGB
-  ihdr[10] = 0; // compression method
-  ihdr[11] = 0; // filter method
-  ihdr[12] = 0; // interlace method
-
-  return Buffer.concat([
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), // PNG signature
-    pngChunk('IHDR', ihdr),
-    pngChunk('IDAT', deflateSync(raw)),
-    pngChunk('IEND', Buffer.alloc(0)),
-  ]);
+  return path;
 }
 
-// ─── Icon pixel drawing ───────────────────────────────────────────────────────
-
-/**
- * Fills `rgba` with the KODA icon design:
- * - Background: #51EAA7  (81, 234, 167)
- * - Lettermark:  white "H" centered, strokes at ~22% of letter width
- */
-function drawIcon(rgba, w, h) {
-  // Background fill
-  for (let i = 0; i < w * h * 4; i += 4) {
-    rgba[i]     = 81;   // R
-    rgba[i + 1] = 234;  // G
-    rgba[i + 2] = 167;  // B
-    rgba[i + 3] = 255;  // A
-  }
-
-  // "H" lettermark — proportional to icon size
-  const lh  = Math.round(h * 0.55);                        // letter height
-  const lw  = Math.round(w * 0.42);                        // letter width
-  const tk  = Math.max(3, Math.round(lw * 0.22));          // stroke thickness
-  const ox  = Math.round((w - lw) / 2);                    // x offset (centered)
-  const oy  = Math.round((h - lh) / 2);                    // y offset (centered)
-  const mid = Math.round(lh / 2);                          // crossbar centre y
-
-  for (let y = oy; y < oy + lh; y++) {
-    for (let x = ox; x < ox + lw; x++) {
-      const lx = x - ox;
-      const ly = y - oy;
-
-      const inLeft   = lx < tk;
-      const inRight  = lx >= lw - tk;
-      const inCrossY = ly >= mid - Math.round(tk / 2) && ly < mid + Math.ceil(tk / 2);
-      const inCrossX = lx >= tk && lx < lw - tk;
-
-      if (inLeft || inRight || (inCrossY && inCrossX)) {
-        const i = (y * w + x) * 4;
-        rgba[i] = rgba[i + 1] = rgba[i + 2] = 255; // white
-      }
-    }
-  }
+/** Path data for `text`, centred in a width×height box. */
+function centredText(text, fontSize, width, height, letterSpacing = 0) {
+  const box = textPath(text, 0, 0, fontSize, letterSpacing).getBoundingBox();
+  const dx = (width  - (box.x2 - box.x1)) / 2 - box.x1;
+  const dy = (height - (box.y2 - box.y1)) / 2 - box.y1;
+  return textPath(text, dx, dy, fontSize, letterSpacing).toPathData(2);
 }
 
-// ─── Generate ─────────────────────────────────────────────────────────────────
+function iconSvg(size) {
+  // Cap height ≈ 46% of the icon keeps the "U" inside the maskable safe zone.
+  const d = centredText('U', size * 0.66, size, size);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${ACCENT}"/><path d="${d}" fill="${ON_ACCENT}"/></svg>`;
+}
 
-const outDir = join(__dirname, '..', 'public', 'icons');
-mkdirSync(outDir, { recursive: true });
+function ogSvg() {
+  const [w, h] = [1200, 630];
+  const d = centredText('UTAN', 220, w, h, 0.04);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="${BG}"/><path d="${d}" fill="${INK}"/></svg>`;
+}
 
-for (const size of [192, 512]) {
-  const rgba = new Uint8Array(size * size * 4);
-  drawIcon(rgba, size, size);
-  const png = encodePNG(size, size, rgba);
-  const outPath = join(outDir, `icon-${size}.png`);
+function writePng(svg, outPath) {
+  const png = new Resvg(svg).render().asPng();
   writeFileSync(outPath, png);
-  console.log(`✓ icon-${size}.png  (${png.length.toLocaleString()} bytes)`);
+  console.log(`✓ ${outPath.replace(root, '').replace(/\\/g, '/')}  (${png.length.toLocaleString()} bytes)`);
 }
+
+mkdirSync(join(root, 'public', 'icons'), { recursive: true });
+
+writeFileSync(join(root, 'public', 'favicon.svg'), iconSvg(64));
+console.log('✓ /public/favicon.svg');
+
+writePng(iconSvg(64),  join(root, 'public', 'favicon.png'));
+writePng(iconSvg(192), join(root, 'public', 'icons', 'icon-192.png'));
+writePng(iconSvg(512), join(root, 'public', 'icons', 'icon-512.png'));
+writePng(ogSvg(),      join(root, 'public', 'og-image.png'));
