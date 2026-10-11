@@ -60,7 +60,7 @@ lib/
   cart.ts                winkelmand in Supabase + lokale wachtrij bij offline
   vision.ts  claude.ts   label uitlezen (dev: Vite-proxy, prod: /api/vision)
   resolveUrl.ts          client voor /api/resolve-url
-  currency.tsx           valuta (standaard GBP; geen keuze meer in de UI)
+  currency.tsx           valuta (standaard EUR; geen keuze meer in de UI)
 api/                     Vercel functions
 scripts/generate-icons.mjs  favicon, app-iconen en og-image uit het font
 ```

@@ -17,15 +17,15 @@ interface CurrencyContextValue {
 }
 
 const CurrencyContext = createContext<CurrencyContextValue>({
-  currency: 'GBP',
-  symbol: '£',
+  currency: 'EUR',
+  symbol: '€',
   setCurrency: () => {},
 });
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return (stored as Currency | null) ?? 'GBP'; // default GBP for London alpha
+    return (stored as Currency | null) ?? 'EUR';
   });
 
   const setCurrency = (c: Currency) => {
