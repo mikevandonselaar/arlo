@@ -7,11 +7,11 @@ import { useCurrency } from '../lib/currency';
 import { findOnline } from '../lib/resolveUrl';
 import { PurchaseConfirmation } from './PurchaseConfirmation';
 
-// Checkout isn't live yet. In dev builds "Koop" opens the confirmation screen so
+// Checkout isn't live yet. In dev builds "Buy" opens the confirmation screen so
 // the design can be reviewed; in production the button stays disabled as before.
 const CHECKOUT_PREVIEW = import.meta.env.DEV;
 
-const PHOTO_LABELS = ['Kledingstuk', 'EAN', 'Label'];
+const PHOTO_LABELS = ['Garment', 'EAN', 'Label'];
 
 interface CartPageProps {
   cart: CartItem[];
@@ -57,11 +57,11 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
         <span className="type-data text-bg/60">
-          {PHOTO_LABELS[index] ?? `Foto ${index + 1}`}
+          {PHOTO_LABELS[index] ?? `Photo ${index + 1}`}
         </span>
         <button
           onClick={onClose}
-          aria-label="Sluit"
+          aria-label="Close"
           className="w-10 h-10 rounded-sm border border-bg/30 flex items-center justify-center active:opacity-70"
         >
           <X className="w-5 h-5" />
@@ -74,7 +74,7 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
           <motion.img
             key={index}
             src={photos[index]}
-            alt={PHOTO_LABELS[index] ?? `Foto ${index + 1}`}
+            alt={PHOTO_LABELS[index] ?? `Photo ${index + 1}`}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
@@ -104,14 +104,14 @@ function PhotoViewer({ photos, initialIndex = 0, onClose }: PhotoViewerProps) {
               disabled={index === 0}
               className="px-5 py-2.5 rounded-sm border border-bg/30 text-sm font-medium active:opacity-70 disabled:opacity-30"
             >
-              Vorige
+              Previous
             </button>
             <button
               onClick={next}
               disabled={index === photos.length - 1}
               className="px-5 py-2.5 rounded-sm border border-bg/30 text-sm font-medium active:opacity-70 disabled:opacity-30"
             >
-              Volgende
+              Next
             </button>
           </div>
         )}
@@ -159,7 +159,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
       <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pt-6 pb-4 flex-shrink-0 bg-bg">
         <button
           onClick={onClose}
-          aria-label="Terug"
+          aria-label="Back"
           className="w-10 h-10 rounded-sm border border-line flex items-center justify-center active:opacity-70"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -178,7 +178,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           <motion.img
             key={photoIndex}
             src={photos[photoIndex]}
-            alt={PHOTO_LABELS[photoIndex] ?? `Foto ${photoIndex + 1}`}
+            alt={PHOTO_LABELS[photoIndex] ?? `Photo ${photoIndex + 1}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -190,7 +190,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
         {/* Photo label badge */}
         <div className="absolute top-3 left-3 bg-ink px-2.5 py-1 rounded-sm">
           <span className="type-data text-bg">
-            {PHOTO_LABELS[photoIndex] ?? `Foto ${photoIndex + 1}`}
+            {PHOTO_LABELS[photoIndex] ?? `Photo ${photoIndex + 1}`}
           </span>
         </div>
 
@@ -223,13 +223,13 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
         <div className="grid grid-cols-2 gap-3">
           {item.size && (
             <div className="border border-line rounded-sm px-4 py-3">
-              <p className="type-data text-muted mb-0.5">Maat</p>
+              <p className="type-data text-muted mb-0.5">Size</p>
               <p className="type-data">{item.size}</p>
             </div>
           )}
           {item.color && (
             <div className="border border-line rounded-sm px-4 py-3">
-              <p className="type-data text-muted mb-0.5">Kleur</p>
+              <p className="type-data text-muted mb-0.5">Colour</p>
               <p className="type-data">{item.color}</p>
             </div>
           )}
@@ -241,7 +241,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           )}
           {item.scannedAt && (
             <div className="border border-line rounded-sm px-4 py-3">
-              <p className="type-data text-muted mb-0.5">Gescand</p>
+              <p className="type-data text-muted mb-0.5">Scanned at</p>
               <p className="type-data truncate">{item.scannedAt}</p>
             </div>
           )}
@@ -257,7 +257,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           className="flex items-center justify-between w-full bg-accent text-on-accent rounded-sm px-5 py-4 active:opacity-70 disabled:opacity-60 disabled:cursor-wait"
         >
           <span className="font-medium text-sm">
-            {isFinding ? 'Zoeken' : 'Zoek online'}
+            {isFinding ? 'Looking up' : 'Find online'}
           </span>
           <ExternalLink className="w-4 h-4" />
         </button>
@@ -267,7 +267,7 @@ function ItemDetail({ item, onClose, onRemove }: ItemDetailProps) {
           className="w-full flex items-center justify-center gap-2 py-3 text-muted text-sm font-medium active:opacity-70"
         >
           <Trash2 className="w-4 h-4" />
-          Verwijder uit mand
+          Remove from cart
         </button>
       </div>
 
@@ -298,10 +298,10 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
   // B3: derive scan location dynamically from cart items
   const scanLocations = [...new Set(cart.map(i => i.scannedAt).filter(Boolean))] as string[];
   const locationLabel = scanLocations.length === 0
-    ? 'Gescand'
+    ? 'In-store scans'
     : scanLocations.length === 1
-    ? `Gescand · ${scanLocations[0]}`
-    : 'Gescand · meerdere winkels';
+    ? scanLocations[0]
+    : 'Multiple stores';
 
   const openViewer = (item: CartItem, photoIndex = 0) => {
     setViewerItem(item);
@@ -324,9 +324,9 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
         >
           <ShoppingBag className="w-10 h-10 text-muted" />
         </motion.div>
-        <h2 className="text-2xl font-medium mb-2 text-center">Je mand is leeg</h2>
+        <h2 className="text-2xl font-medium mb-2 text-center">Your cart is empty</h2>
         <p className="text-muted text-center mb-8 max-w-[240px] text-sm">
-          Scan kleding in de winkel om je mand te vullen.
+          Scan garments in store to fill your cart.
         </p>
       </div>
     );
@@ -338,7 +338,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
 
         {/* B1: Header */}
         <div className="px-6 pt-4 pb-4 bg-bg sticky top-0 z-10">
-          <h1 className="text-2xl font-medium leading-none">Winkelmand</h1>
+          <h1 className="text-2xl font-medium leading-none">Cart</h1>
           <div className="flex items-center gap-3 mt-2">
             {/* B2: item count */}
             <span className="type-data">
@@ -378,7 +378,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                       <button
                         onClick={() => openViewer(item, 0)}
                         className="w-20 h-24 border border-line rounded-sm overflow-hidden flex-shrink-0 active:opacity-70"
-                        aria-label="Bekijk foto's"
+                        aria-label="View photos"
                       >
                         <img
                           src={item.image}
@@ -403,7 +403,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                         <p className="type-data text-muted">{item.brand}</p>
                         <h3 className="font-medium text-sm leading-tight mt-0.5 line-clamp-2">{item.name}</h3>
                         <p className="type-data text-muted mt-1">
-                          {[item.size && `Maat ${item.size}`, item.color].filter(Boolean).join(' · ')}
+                          {[item.size && `Size ${item.size}`, item.color].filter(Boolean).join(' · ')}
                         </p>
 
                         <div className="mt-auto flex items-center justify-between pt-3">
@@ -418,7 +418,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                           >
                             <button
                               onClick={() => item.dbId && onUpdateQuantity(item.dbId, item.quantity - 1)}
-                              aria-label="Minder"
+                              aria-label="Less"
                               className="w-7 h-7 flex items-center justify-center active:opacity-70"
                             >
                               <Minus className="w-3 h-3" />
@@ -426,7 +426,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
                             <span className="w-6 text-center font-mono text-xs">{item.quantity}</span>
                             <button
                               onClick={() => item.dbId && onUpdateQuantity(item.dbId, item.quantity + 1)}
-                              aria-label="Meer"
+                              aria-label="More"
                               className="w-7 h-7 flex items-center justify-center active:opacity-70"
                             >
                               <Plus className="w-3 h-3" />
@@ -446,7 +446,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
         {/* Checkout summary */}
         <div className="px-6 py-5 bg-bg border-t border-line flex-shrink-0">
           <div className="flex justify-between items-end mb-5">
-            <span className="type-data text-muted">Totaal</span>
+            <span className="type-data text-muted">Total</span>
             <span className="type-hero tabular-nums">
               {CURRENCY_SYMBOL}{subtotal.toFixed(2)}
             </span>
@@ -456,8 +456,8 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
             onClick={() => setOrderNumber(`UT-${Date.now().toString().slice(-6)}`)}
             className="w-full h-14 text-base disabled:cursor-not-allowed"
           >
-            Koop
-            {!CHECKOUT_PREVIEW && <span className="ml-1.5 text-xs font-normal">(binnenkort)</span>}
+            Buy
+            {!CHECKOUT_PREVIEW && <span className="ml-1.5 text-xs font-normal">(coming soon)</span>}
           </Button>
         </div>
       </div>
@@ -489,7 +489,7 @@ export function CartPage({ cart, onUpdateQuantity, onRemoveItem }: CartPageProps
         {orderNumber && (
           <PurchaseConfirmation
             orderNumber={orderNumber}
-            deliveryLine="Thuis morgen"
+            deliveryLine="Home tomorrow"
             onClose={() => setOrderNumber(null)}
           />
         )}

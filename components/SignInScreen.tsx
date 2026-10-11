@@ -100,10 +100,10 @@ export function SignInScreen({
       } else {
         // Supabase "Confirm email" is ON — user must click the link first
         setEmailConfirmationSent(true);
-        toast.success('Check je inbox. Klik op de bevestigingslink en log daarna in.');
+        toast.success('Check your inbox. Click the confirmation link, then sign in.');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Account maken lukt niet');
+      toast.error(err instanceof Error ? err.message : 'Could not create account');
     } finally {
       setLoading(false);
     }
@@ -117,7 +117,7 @@ export function SignInScreen({
       await addUsernameToExistingSession(username);
       onSignIn();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Gebruikersnaam opslaan lukt niet');
+      toast.error(err instanceof Error ? err.message : 'Could not save username');
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ export function SignInScreen({
       await signInWithEmail(signinEmail, signinPassword);
       onSignIn();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'E-mail of wachtwoord klopt niet');
+      toast.error(err instanceof Error ? err.message : 'Incorrect email or password');
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export function SignInScreen({
     try {
       await signInWithGoogle();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Inloggen met Google lukt niet');
+      toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
       setLoading(false);
     }
   };
@@ -149,11 +149,11 @@ export function SignInScreen({
   // ── Username status copy ───────────────────────────────────────────────────
 
   const usernameHintText: Record<UsernameStatus, string> = {
-    idle:      '3–20 tekens · letters, cijfers, underscores',
-    invalid:   'Alleen 3–20 tekens · letters, cijfers, underscores',
-    checking:  'Controleren',
-    available: 'Beschikbaar',
-    taken:     'Bezet',
+    idle:      '3–20 chars · letters, numbers, underscores',
+    invalid:   '3–20 chars · letters, numbers, underscores only',
+    checking:  'Checking',
+    available: 'Available',
+    taken:     'Taken',
   };
   const usernameHintColour: Record<UsernameStatus, string> = {
     idle:      'text-muted',
@@ -172,14 +172,14 @@ export function SignInScreen({
       className="flex items-center gap-1.5 text-sm font-medium text-muted active:opacity-70 mb-6"
     >
       <ArrowLeft className="w-4 h-4" />
-      Terug
+      Back
     </button>
   );
 
   const OrDivider = () => (
     <div className="relative flex items-center gap-3">
       <div className="flex-1 h-px bg-line" />
-      <span className="type-data text-muted">of</span>
+      <span className="type-data text-muted">or</span>
       <div className="flex-1 h-px bg-line" />
     </div>
   );
@@ -192,7 +192,7 @@ export function SignInScreen({
       className="w-full border border-line h-14 rounded-sm flex items-center justify-center gap-3 font-medium text-ink active:opacity-70 disabled:opacity-50 text-sm"
     >
       <GoogleIcon />
-      Verder met Google
+      Continue with Google
     </button>
   );
 
@@ -203,7 +203,7 @@ export function SignInScreen({
       <Wordmark className={compact ? 'text-2xl mb-5' : 'text-[56px] mb-8'} />
       {!compact && (
         <p className="type-data text-muted">
-          Winkelen zonder gedoe.
+          Shopping without the hassle.
         </p>
       )}
     </div>
@@ -222,16 +222,16 @@ export function SignInScreen({
             <motion.div key="confirm-email" {...slideIn} className="text-center space-y-6">
               <LogoSection compact />
               <div className="border border-line rounded-sm p-8 space-y-4">
-                <h2 className="text-xl font-medium text-ink">Check je inbox</h2>
+                <h2 className="text-xl font-medium text-ink">Check your inbox</h2>
                 <p className="text-sm text-muted leading-relaxed">
-                  Er is een bevestigingslink gestuurd naar <strong className="font-medium text-ink">{signupEmail}</strong>.
-                  Klik erop en log daarna in.
+                  A confirmation link was sent to <strong className="font-medium text-ink">{signupEmail}</strong>.
+                  Click it, then sign in.
                 </p>
                 <Button
                   onClick={() => { setEmailConfirmationSent(false); setStep('signin'); }}
                   className="w-full h-12 text-sm"
                 >
-                  Naar inloggen
+                  Go to sign in
                 </Button>
               </div>
             </motion.div>
@@ -249,7 +249,7 @@ export function SignInScreen({
                     onClick={onSignIn}
                     className="w-full h-14 text-base"
                   >
-                    Login overslaan (dev)
+                    Skip login (dev)
                   </Button>
                 )}
 
@@ -257,7 +257,7 @@ export function SignInScreen({
                   onClick={() => setStep('signup-email')}
                   className="w-full h-14 text-base"
                 >
-                  Account maken
+                  Create account
                 </Button>
 
                 <Button
@@ -265,7 +265,7 @@ export function SignInScreen({
                   onClick={() => setStep('signin')}
                   className="w-full h-14 text-base"
                 >
-                  Inloggen
+                  Sign in
                 </Button>
 
                 <OrDivider />
@@ -273,12 +273,12 @@ export function SignInScreen({
 
                 {/* O6 — Privacy note */}
                 <p className="text-center text-[10px] text-muted leading-relaxed pt-1">
-                  Met een account ga je akkoord met de{' '}
+                  By creating an account you agree to the{' '}
                   {/* TODO: replace # with real Terms URL */}
-                  <a href="#" className="underline">voorwaarden</a>
-                  {' '}en het{' '}
+                  <a href="#" className="underline">terms</a>
+                  {' '}and{' '}
                   {/* TODO: replace # with real Privacy Policy URL */}
-                  <a href="#" className="underline">privacybeleid</a>
+                  <a href="#" className="underline">privacy policy</a>
                 </p>
               </div>
             </motion.div>
@@ -292,19 +292,19 @@ export function SignInScreen({
 
               <div className="border border-line rounded-sm p-8 space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-medium text-ink">Account maken</h2>
-                  <p className="text-sm text-muted">Vul je e-mail in en kies een wachtwoord.</p>
+                  <h2 className="text-2xl font-medium text-ink">Create account</h2>
+                  <p className="text-sm text-muted">Enter your email and choose a password.</p>
                 </div>
 
                 <form onSubmit={handleSignupEmail} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="signup-email-input" className="ml-1">
-                      E-mail
+                      Email
                     </Label>
                     <Input
                       id="signup-email-input"
                       type="email"
-                      placeholder="naam@voorbeeld.nl"
+                      placeholder="name@example.com"
                       value={signupEmail}
                       onChange={e => setSignupEmail(e.target.value)}
                       required
@@ -314,12 +314,12 @@ export function SignInScreen({
 
                   <div className="space-y-1.5">
                     <Label htmlFor="signup-password-input" className="ml-1">
-                      Wachtwoord
+                      Password
                     </Label>
                     <Input
                       id="signup-password-input"
                       type="password"
-                      placeholder="Minimaal 8 tekens"
+                      placeholder="Min. 8 characters"
                       value={signupPassword}
                       onChange={e => setSignupPassword(e.target.value)}
                       required
@@ -333,15 +333,15 @@ export function SignInScreen({
                     disabled={loading}
                     className="w-full h-14 text-base mt-2"
                   >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verder'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Continue'}
                   </Button>
                 </form>
 
                 <p className="text-center text-[10px] text-muted leading-relaxed">
-                  Met een account ga je akkoord met de{' '}
-                  <a href="#" className="underline">voorwaarden</a>
-                  {' '}en het{' '}
-                  <a href="#" className="underline">privacybeleid</a>
+                  By creating an account you agree to the{' '}
+                  <a href="#" className="underline">terms</a>
+                  {' '}and{' '}
+                  <a href="#" className="underline">privacy policy</a>
                 </p>
               </div>
             </motion.div>
@@ -355,21 +355,21 @@ export function SignInScreen({
 
               <div className="border border-line rounded-sm p-8 space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-medium text-ink">Kies een gebruikersnaam</h2>
-                  <p className="text-sm text-muted">Zo heet je in utan.</p>
+                  <h2 className="text-2xl font-medium text-ink">Choose a username</h2>
+                  <p className="text-sm text-muted">This is your name in utan.</p>
                 </div>
 
                 <form onSubmit={handlePickUsername} className="space-y-5">
                   <div className="space-y-1.5">
                     <Label htmlFor="username-input" className="ml-1">
-                      Gebruikersnaam
+                      Username
                     </Label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-medium select-none">@</span>
                       <Input
                         id="username-input"
                         type="text"
-                        placeholder="jouwnaam"
+                        placeholder="yourname"
                         value={username}
                         onChange={handleUsernameInput}
                         maxLength={20}
@@ -394,7 +394,7 @@ export function SignInScreen({
                     disabled={usernameStatus !== 'available' || loading}
                     className="w-full h-14 text-base disabled:cursor-not-allowed"
                   >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Opslaan'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save'}
                   </Button>
                 </form>
               </div>
@@ -409,19 +409,19 @@ export function SignInScreen({
 
               <div className="border border-line rounded-sm p-8 space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-medium text-ink">Inloggen</h2>
-                  <p className="text-sm text-muted">Log in om verder te gaan.</p>
+                  <h2 className="text-2xl font-medium text-ink">Sign in</h2>
+                  <p className="text-sm text-muted">Sign in to continue.</p>
                 </div>
 
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="signin-email" className="ml-1">
-                      E-mail
+                      Email
                     </Label>
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="naam@voorbeeld.nl"
+                      placeholder="name@example.com"
                       value={signinEmail}
                       onChange={e => setSigninEmail(e.target.value)}
                       required
@@ -432,11 +432,11 @@ export function SignInScreen({
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between ml-1">
                       <Label htmlFor="signin-password">
-                        Wachtwoord
+                        Password
                       </Label>
                       {/* TODO: wire up forgot-password flow (PL8) */}
                       <a href="#" className="text-[11px] text-ink underline">
-                        Wachtwoord vergeten?
+                        Forgot password?
                       </a>
                     </div>
                     <Input
@@ -455,7 +455,7 @@ export function SignInScreen({
                     disabled={loading}
                     className="w-full h-14 text-base mt-2"
                   >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Inloggen'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign in'}
                   </Button>
                 </form>
 
@@ -463,13 +463,13 @@ export function SignInScreen({
                 <GoogleButton />
 
                 <div className="text-center text-[11px] text-muted">
-                  Nieuw hier?{' '}
+                  New here?{' '}
                   <button
                     type="button"
                     onClick={() => setStep('signup-email')}
                     className="text-ink font-medium underline"
                   >
-                    Account maken
+                    Create account
                   </button>
                 </div>
               </div>

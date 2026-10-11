@@ -65,10 +65,10 @@ api/                     Vercel functions
 scripts/generate-icons.mjs  favicon, app-iconen en og-image uit het font
 ```
 
-Navigatiebalk: `Home · Scan · Mand · Profiel`. De winkelmand is gesleuteld op
+Navigatiebalk: `Home · Scan · Cart · Profile`. De winkelmand is gesleuteld op
 `(id, scannedAt)`: hetzelfde product uit twee winkels geeft twee regels.
 
-Afrekenen bestaat nog niet. De knop `Koop` is in productie uitgeschakeld; in een
+Afrekenen bestaat nog niet. De knop `Buy` is in productie uitgeschakeld; in een
 dev-build opent hij het bevestigingsscherm zodat het ontwerp te bekijken is
 (`CHECKOUT_PREVIEW` in `CartPage.tsx`).
 
@@ -95,8 +95,8 @@ houd ze gelijk.
 
 Accent staat alleen op:
 - de vier scanhoeken
-- de primaire knop van een scherm (`Koop`, `Start camera`, `Account maken`)
-- status-stippen (`Gescand`, teller op de mand)
+- de primaire knop van een scherm (`Buy`, `Start camera`, `Create account`)
+- status-stippen (`Scanned`, teller op de mand)
 - geselecteerde toestanden (actieve tab)
 
 Al het andere is ink op bg. Geen emoji, geen illustraties, geen schaduwen, geen
@@ -111,7 +111,7 @@ Het bevestigingsscherm na een aankoop is het **enige** volledig blauwe scherm.
 - **DM Mono** (400, 500): data — maat, EAN, ordernummer, tijden, status, veldlabels.
   Gebruik `type-data` (11px, hoofdletters). `<Label>` heeft deze stijl al.
 - **Schaalcontrast:** per scherm één element heel groot met `type-hero` (56px,
-  line-height 0.9, letter-spacing -0.05em): de prijs, het totaal of `Gekocht.`.
+  line-height 0.9, letter-spacing -0.05em): de prijs, het totaal of `Bought.`.
   De rest blijft klein.
 
 `type-hero` en `type-data` niet combineren met `text-*`-groottes of `tracking-*`.
@@ -138,13 +138,11 @@ komen uit `node scripts/generate-icons.mjs`.
 
 ### Copy
 
-Nederlands, kort, feitelijk, geen uitroeptekens. Zinnen beginnen met een hoofdletter;
+Alle UI-tekst is **Engels** (besluit 11 okt 2026; de briefing ging nog uit van
+Nederlands). Kort, feitelijk, geen uitroeptekens. Zinnen beginnen met een hoofdletter;
 de merknaam in lopende tekst is `utan` (kleine letters, geen punt).
-Voorbeelden: `Koop`, `Gekocht. Zonder tas.`, `Thuis morgen`, `Gescand`,
-`Niet meer op voorraad in maat M`.
-
-Foutmeldingen die rechtstreeks van Supabase komen zijn Engels; alleen de eigen
-terugvalteksten zijn vertaald.
+Voorbeelden: `Buy`, `Bought. No bag.`, `Home tomorrow`, `Scanned`,
+`Out of stock in size M`.
 
 ## Lokaal draaien
 

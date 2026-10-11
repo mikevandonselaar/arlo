@@ -7,12 +7,12 @@ interface Props {
 }
 
 const DISCLAIMERS = [
-  'Niet elk kledingstuk is online te vinden.',
-  'Prijzen moet je soms zelf aanpassen.',
-  'Werkt alleen met winkels die online verkopen.',
-  'Betalen kan nog niet in de app.',
-  'De winkel verzorgt de bezorging.',
-  'Dit is een vroege alpha. Niet alles werkt al goed.',
+  'Not all garments can be found online.',
+  'Prices may need manual correction.',
+  'Works with stores that sell online only.',
+  'Payments are not in the app yet.',
+  'Delivery is handled by the store.',
+  'This is an early alpha. Not everything works yet.',
 ];
 
 export default function HeadsUpScreen({ onBack }: Props) {
@@ -27,22 +27,22 @@ export default function HeadsUpScreen({ onBack }: Props) {
           onClick={onBack}
           className="mb-4 text-xs text-muted active:opacity-70"
         >
-          ← Terug
+          ← Back
         </button>
 
         {/* Eyebrow */}
         <p className="type-data text-muted mb-[6px]">
-          Goed om te weten
+          Heads up
         </p>
 
         {/* Heading */}
         <h1 className="text-[22px] font-medium leading-[28px] mb-[10px]">
-          Alpha: nog niet alles werkt.
+          Alpha means rough edges.
         </h1>
 
         {/* Subtext */}
         <p className="text-[11px] leading-[17px] text-muted mb-4">
-          Er wordt nog gebouwd. Dingen kunnen stukgaan, er vreemd uitzien of niet werken.
+          Still being built. Things might break, look weird or not work at all.
         </p>
 
         {/* Disclaimer block */}
@@ -62,7 +62,7 @@ export default function HeadsUpScreen({ onBack }: Props) {
               className="w-full text-left border border-line rounded-sm p-[10px] mb-2"
             >
               <span className="text-[11px] font-medium">
-                {whatsNewOpen ? '▾' : '▸'} Nieuw
+                {whatsNewOpen ? '▾' : '▸'} What's new
               </span>
             </button>
             {whatsNewOpen && (
@@ -85,7 +85,7 @@ export default function HeadsUpScreen({ onBack }: Props) {
             className="flex items-center justify-center rounded-sm bg-accent text-on-accent py-[13px] active:opacity-70"
           >
             <span className="text-[13px] font-medium">
-              Stuur feedback
+              Send feedback
             </span>
           </a>
         </div>

@@ -18,7 +18,7 @@ export function PurchaseConfirmation({ orderNumber, deliveryLine, onClose }: Pur
   return (
     <motion.div
       role="dialog"
-      aria-label="Gekocht"
+      aria-label="Bought"
       initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(100% 0 0 0)' }}
       animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0% 0 0 0)' }}
       exit={{ opacity: 0 }}
@@ -30,7 +30,7 @@ export function PurchaseConfirmation({ orderNumber, deliveryLine, onClose }: Pur
 
       <div className="flex-1 flex flex-col justify-end pb-10">
         <h1 className="type-hero">
-          Gekocht.<br />Zonder tas.
+          Bought.<br />No bag.
         </h1>
         <p className="type-data mt-6">Order {orderNumber}</p>
         <p className="type-data">{deliveryLine}</p>
@@ -40,7 +40,7 @@ export function PurchaseConfirmation({ orderNumber, deliveryLine, onClose }: Pur
         onClick={onClose}
         className="w-full h-14 rounded-sm border border-on-accent text-on-accent font-medium text-base active:opacity-70"
       >
-        Sluit
+        Close
       </button>
     </motion.div>
   );

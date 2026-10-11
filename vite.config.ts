@@ -15,8 +15,8 @@ export default defineConfig({
       manifest: {
         name: 'utan',
         short_name: 'utan',
-        description: 'Winkelen zonder gedoe. Scan in de winkel, utan brengt het thuis.',
-        lang: 'nl',
+        description: 'Shopping without the hassle. Scan in store, utan brings it home.',
+        lang: 'en',
         theme_color: '#F7F6F2',
         background_color: '#F7F6F2',
         display: 'standalone',

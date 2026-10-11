@@ -46,12 +46,12 @@ export function MainApp({ onSignOut }: MainAppProps) {
       try {
         const flushed = await cartOps.drainQueue();
         if (flushed.length > 0) {
-          toast.success(`${flushed.length} ${flushed.length > 1 ? 'items' : 'item'} gesynchroniseerd`);
+          toast.success(`${flushed.length} ${flushed.length > 1 ? 'items' : 'item'} synced`);
         }
         const items = await cartOps.getCart();
         setCart(items);
       } catch {
-        toast.error('Winkelmand laden lukt niet');
+        toast.error('Could not load your cart');
       }
     }
     init();
@@ -75,7 +75,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
         if (dup) return prev.map(i => i === dup ? { ...i, quantity: i.quantity + 1 } : i);
         return [...prev, { ...product, quantity: 1 }];
       });
-      toast.warning('Lokaal bewaard. Wordt gesynchroniseerd zodra je online bent');
+      toast.warning('Saved locally. Will sync when you are back online');
     }
     setCurrentPage('cart');
   };
@@ -85,7 +85,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
       await cartOps.removeFromCart(dbId);
       setCart(prev => prev.filter(i => i.dbId !== dbId));
     } catch {
-      toast.error('Verwijderen lukt niet');
+      toast.error('Could not remove item');
     }
   };
 
@@ -98,7 +98,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
       await cartOps.updateQuantity(dbId, quantity);
       setCart(prev => prev.map(i => i.dbId === dbId ? { ...i, quantity } : i));
     } catch {
-      toast.error('Aantal aanpassen lukt niet');
+      toast.error('Could not update quantity');
     }
   };
 
@@ -178,7 +178,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
                 {cartItemCount}
               </span>
             )}
-            <span className="text-[10px] mt-1 font-medium">Mand</span>
+            <span className="text-[10px] mt-1 font-medium">Cart</span>
           </button>
 
           <button
@@ -186,7 +186,7 @@ export function MainApp({ onSignOut }: MainAppProps) {
             className={`flex flex-col items-center justify-center active:opacity-70 ${tabColour('profile')}`}
           >
             <User className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-medium">Profiel</span>
+            <span className="text-[10px] mt-1 font-medium">Profile</span>
           </button>
         </div>
       </div>

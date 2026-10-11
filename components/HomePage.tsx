@@ -10,19 +10,19 @@ interface HomePageProps {
 }
 
 const KNOWN_ISSUES = [
-  'Maak een scherpe foto van het label. De barcode moet helemaal zichtbaar zijn.',
-  'De prijs wordt meestal automatisch ingevuld. Soms moet je hem zelf aanpassen.',
-  'utan werkt alleen met winkels die ook online verkopen. Je scan wordt gekoppeld aan hun webshop.',
-  'Hoe nauwkeurig je locatie is, hangt af van de instellingen van je toestel.',
-  'Betalen kan nog niet in de app. Dat komt later.',
-  'De winkel verzorgt de bezorging.',
-  'Dit is een vroege alpha. Niet alles werkt al goed.',
+  'Take a sharp photo of the label. The barcode has to be fully visible.',
+  'The price is usually filled in automatically. Sometimes you have to correct it.',
+  'utan only works with stores that also sell online. Your scan is matched to their webshop.',
+  'Location accuracy depends on your device settings.',
+  'Payments are not in the app yet. That comes later.',
+  'Delivery is handled by the store.',
+  'This is an early alpha. Not everything works yet.',
 ];
 
 const VERSIONS = [
-  { version: 'v0.3', date: '3 mei 2026', lines: ['Community-scherm live', 'Onboarding vernieuwd', 'Volg-slide bijgewerkt'] },
-  { version: 'v0.2', date: 'april 2026', lines: ['Winkelmand toegevoegd', 'Profielscherm live'] },
-  { version: 'v0.1', date: 'eerste alpha', lines: ['App intern gelanceerd'] },
+  { version: 'v0.3', date: '3 May 2026', lines: ['Community screen live', 'Onboarding redesigned', 'Follow slide updated'] },
+  { version: 'v0.2', date: 'April 2026', lines: ['Cart added', 'Profile screen live'] },
+  { version: 'v0.1', date: 'first alpha', lines: ['App launched internally'] },
 ];
 
 export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps) {
@@ -65,7 +65,7 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
         <div className="flex items-center gap-1.5 border border-line rounded-sm pl-2.5 pr-3.5 py-1.5">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="type-data">
-            {city ?? 'Zoeken'}
+            {city ?? 'Locating'}
           </span>
         </div>
       </div>
@@ -76,23 +76,23 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
         {/* Welcome — fills the screen, content anchored to the bottom */}
         <section className="min-h-full flex flex-col justify-end px-6 pt-10 pb-8">
           <h1 className="type-hero mb-5">
-            Welkom bij utan.
+            Welcome to utan.
           </h1>
           <p className="text-sm text-muted leading-relaxed mb-6">
-            Loop een winkel in, scan wat je wilt hebben en utan regelt de rest.
+            Walk into a store, scan what you want and utan handles the rest.
           </p>
           <div className="space-y-3">
             <button
               onClick={onStartScanning}
               className="block w-full h-14 rounded-sm bg-accent text-on-accent text-base font-medium active:opacity-70"
             >
-              Start met scannen
+              Start scanning
             </button>
             <button
               onClick={scrollToExpect}
               className="block w-full h-14 rounded-sm border border-ink text-ink text-base font-medium active:opacity-70"
             >
-              Wat je kunt verwachten
+              What to expect
             </button>
           </div>
         </section>
@@ -100,10 +100,10 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
         {/* What to expect — known issues and versions */}
         <section ref={expectRef} className="px-6 pt-8 pb-10 border-t border-line">
           <h2 className="text-3xl font-medium leading-[1.1] tracking-[-0.02em] mb-8">
-            Wat je kunt verwachten
+            What to expect
           </h2>
 
-          <p className="type-data text-muted mb-3">Goed om te weten</p>
+          <p className="type-data text-muted mb-3">Good to know</p>
           <ul className="border-t border-line mb-10">
             {KNOWN_ISSUES.map(item => (
               <li key={item} className="py-3 border-b border-line text-sm leading-normal">
@@ -112,7 +112,7 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
             ))}
           </ul>
 
-          <p className="type-data text-muted mb-3">Versies</p>
+          <p className="type-data text-muted mb-3">Versions</p>
           <ul className="border-t border-line mb-10">
             {VERSIONS.map(note => (
               <li key={note.version} className="py-3 border-b border-line flex gap-4">
@@ -133,7 +133,7 @@ export function HomePage({ onStartScanning, onNavigateToHeadsUp }: HomePageProps
             onClick={onNavigateToHeadsUp}
             className="text-sm text-muted underline active:opacity-70"
           >
-            Iets vreemds gezien? Stuur feedback.
+            Seen something weird? Send feedback.
           </button>
         </section>
 

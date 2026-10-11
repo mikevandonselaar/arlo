@@ -28,14 +28,14 @@ const MOCK_EXTRACTION: LabelExtraction = {
 
 // S4: Ordered 3-photo flow — recommended but not enforced
 const PHOTO_STEPS = [
-  { label: 'Kledingstuk', instruction: 'Maak een foto van het kledingstuk',       phase: 'Foto kledingstuk' },
-  { label: 'EAN',         instruction: 'Maak een foto van de EAN / barcode',      phase: 'Foto EAN' },
-  { label: 'Label',       instruction: 'Maak een foto van het label / merklabel', phase: 'Foto label' },
+  { label: 'Garment', instruction: 'Take a photo of the garment',          phase: 'Garment photo' },
+  { label: 'EAN',     instruction: 'Take a photo of the EAN / barcode',    phase: 'EAN photo' },
+  { label: 'Label',   instruction: 'Take a photo of the label / brand tag', phase: 'Label photo' },
 ] as const;
 
 const MAX_PHOTOS = PHOTO_STEPS.length;
 
-const DEFAULT_STORE = 'In de winkel';
+const DEFAULT_STORE = 'In-Store Scan';
 
 // Viewfinder corners. On recognition they click inwards by CORNER_SNAP px.
 const CORNER_SNAP = 10;
@@ -79,7 +79,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
         if (videoRef.current) videoRef.current.srcObject = stream;
       })
       .catch(() => {
-        toast.error('Geen toegang tot de camera');
+        toast.error('Camera access denied');
         setIsScanning(false);
       });
     return () => {
@@ -147,7 +147,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
       // Recognised — short haptic tick where the device supports it
       navigator.vibrate?.(10);
     } catch {
-      toast.error('Label niet leesbaar. Probeer meer licht of ga dichterbij.');
+      toast.error('Could not read the label. Try better lighting or a closer shot.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -185,10 +185,10 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
   const nextStep   = PHOTO_STEPS[capturedPhotos.length];
   const recognised = scannedProduct !== null;
   const phaseLabel = recognised
-    ? 'Gescand'
+    ? 'Scanned'
     : capturedPhotos.length >= MAX_PHOTOS
-    ? 'Klaar voor analyse'
-    : nextStep?.phase ?? 'Klaar voor analyse';
+    ? 'Ready to analyse'
+    : nextStep?.phase ?? 'Ready to analyse';
 
   // Price validation for the confirm button (A3 — applied here too for consistency)
   const priceValue   = parseFloat(editState?.price ?? '');
@@ -222,8 +222,8 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
           {/* S2: instruction text */}
           <p className="text-muted text-center mb-12 max-w-xs leading-relaxed text-sm">
             {DEV_MOCK_SCAN
-              ? 'Dev-modus actief. Geeft direct mockdata van een Adidas Yeezy terug.'
-              : 'Open de camera en volg de stappen.'}
+              ? 'Dev mode active. Returns mock Adidas Yeezy data instantly.'
+              : 'Open the camera and follow the steps.'}
           </p>
 
           {/* S3: Start button */}
@@ -242,14 +242,14 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               className="w-full h-12 text-sm"
             >
               <Sparkles className="w-4 h-4" />
-              Sla camera over, gebruik mockdata
+              Skip camera, use mock data
             </Button>
           )}
 
           {/* S3: updated subtitle */}
           {!DEV_MOCK_SCAN && (
             <p className="type-data text-muted mt-4">
-              Richt op het kledingstuk
+              Point at the garment
             </p>
           )}
         </div>
@@ -272,7 +272,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
             <div className="p-6 flex justify-between items-center z-20 flex-shrink-0">
               <button
                 onClick={stopCamera}
-                aria-label="Sluit camera"
+                aria-label="Close camera"
                 className="w-12 h-12 bg-ink/40 rounded-sm flex items-center justify-center active:opacity-70"
               >
                 <X className="w-6 h-6" />
@@ -284,7 +284,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               </span>
 
               <button
-                aria-label="Zaklamp"
+                aria-label="Flashlight"
                 className="w-12 h-12 bg-ink/40 rounded-sm flex items-center justify-center active:opacity-70"
               >
                 <Flashlight className="w-6 h-6" />
@@ -298,18 +298,18 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                   <div key={i} className="relative">
                     <img
                       src={photo}
-                      alt={PHOTO_STEPS[i]?.label ?? `Foto ${i + 1}`}
+                      alt={PHOTO_STEPS[i]?.label ?? `Photo ${i + 1}`}
                       className="w-16 h-20 object-cover rounded-sm border border-on-accent"
                     />
                     <button
                       onClick={() => removePhoto(i)}
                       className="absolute -top-2 -right-2 w-5 h-5 bg-ink rounded-full flex items-center justify-center border border-on-accent/30"
-                      aria-label="Verwijder foto"
+                      aria-label="Remove photo"
                     >
                       <X className="w-3 h-3" />
                     </button>
                     <span className="absolute bottom-1 left-1 font-mono text-[8px] uppercase bg-ink/60 px-1 rounded-sm">
-                      {PHOTO_STEPS[i]?.label ?? `Foto ${i + 1}`}
+                      {PHOTO_STEPS[i]?.label ?? `Photo ${i + 1}`}
                     </span>
                   </div>
                 ))}
@@ -350,7 +350,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
               <div className="p-8 pb-12 flex flex-col items-center gap-3 z-20">
                 <p className="type-data">
-                  Analyseren
+                  Analysing
                 </p>
               </div>
 
@@ -363,7 +363,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                   className="h-14 text-base w-full"
                 >
                   <Sparkles className="w-5 h-5" />
-                  Analyseer
+                  Analyse
                 </Button>
               </div>
 
@@ -374,7 +374,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                 <button
                   onClick={capturePhoto}
                   className="w-20 h-20 rounded-full border-4 border-on-accent flex items-center justify-center active:opacity-70"
-                  aria-label="Maak foto"
+                  aria-label="Capture photo"
                 >
                   <div className="w-14 h-14 rounded-full bg-on-accent" />
                 </button>
@@ -383,7 +383,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                     onClick={handleAnalyse}
                     className="flex items-center gap-1.5 type-data"
                   >
-                    <Sparkles className="w-3.5 h-3.5" /> Gebruik mockdata
+                    <Sparkles className="w-3.5 h-3.5" /> Use mock data
                   </button>
                 )}
               </div>
@@ -412,23 +412,23 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               {/* A1: "GARMENT DETAILS" label */}
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 border border-line rounded-sm overflow-hidden flex-shrink-0">
-                  <img src={scannedProduct.image} alt="Kledingstuk" className="w-full h-full object-cover" />
+                  <img src={scannedProduct.image} alt="Garment" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="type-data flex items-center gap-2 mb-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    Gescand
+                    Scanned
                   </p>
                   {/* A2: prominent subtitle */}
                   <p className="text-xs text-muted leading-snug">
-                    Controleer de gegevens en pas aan waar nodig.
+                    Check the details and correct anything that is off.
                   </p>
                 </div>
               </div>
 
               {/* Name */}
               <div className="space-y-1.5">
-                <Label className="ml-1">Productnaam</Label>
+                <Label className="ml-1">Product name</Label>
                 <Input
                   value={editState.name}
                   onChange={e => setEditState(s => s && ({ ...s, name: e.target.value }))}
@@ -438,7 +438,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
               {/* Brand */}
               <div className="space-y-1.5">
-                <Label className="ml-1">Merk</Label>
+                <Label className="ml-1">Brand</Label>
                 <Input
                   value={editState.brand}
                   onChange={e => setEditState(s => s && ({ ...s, brand: e.target.value }))}
@@ -450,7 +450,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className={`ml-1 ${priceInvalid ? 'text-ink' : ''}`}>
-                    {priceInvalid ? 'Prijs verplicht' : `Prijs (${currencySymbol})`}
+                    {priceInvalid ? 'Price required' : `Price (${currencySymbol})`}
                   </Label>
                   {/* A3: heavy border when price is empty/zero */}
                   <Input
@@ -462,13 +462,13 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                     className={`h-12 ${priceInvalid ? 'border-2 border-ink' : ''}`}
                   />
                   {priceInvalid && (
-                    <p className="text-[10px] text-ink ml-1">Vul de prijs in</p>
+                    <p className="text-[10px] text-ink ml-1">Fill in the price</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="ml-1">Maat</Label>
+                  <Label className="ml-1">Size</Label>
                   <Input
-                    placeholder="bv. M"
+                    placeholder="e.g. M"
                     value={editState.size}
                     onChange={e => setEditState(s => s && ({ ...s, size: e.target.value }))}
                     className="h-12"
@@ -479,9 +479,9 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
               {/* Color + EAN */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="ml-1">Kleur</Label>
+                  <Label className="ml-1">Colour</Label>
                   <Input
-                    placeholder="bv. Zwart"
+                    placeholder="e.g. Black"
                     value={editState.color}
                     onChange={e => setEditState(s => s && ({ ...s, color: e.target.value }))}
                     className="h-12"
@@ -490,7 +490,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                 <div className="space-y-1.5">
                   <Label className="ml-1">EAN / barcode</Label>
                   <Input
-                    placeholder="bv. 1234567890123"
+                    placeholder="e.g. 1234567890123"
                     value={editState.ean}
                     onChange={e => setEditState(s => s && ({ ...s, ean: e.target.value }))}
                     className="h-12 font-mono"
@@ -500,9 +500,9 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
 
               {/* Store name */}
               <div className="space-y-1.5">
-                <Label className="ml-1">Winkel</Label>
+                <Label className="ml-1">Store</Label>
                 <Input
-                  placeholder="bv. Nike, Kalverstraat"
+                  placeholder="e.g. Nike, Oxford St"
                   value={editState.scannedAt}
                   onChange={e => setEditState(s => s && ({ ...s, scannedAt: e.target.value }))}
                   className="h-12"
@@ -517,7 +517,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                   onClick={handleCancelProduct}
                   className="flex-1 h-14"
                 >
-                  Annuleer
+                  Cancel
                 </Button>
                 {/* A3/A5: disabled when price invalid */}
                 <Button
@@ -525,7 +525,7 @@ export function CameraScanner({ onAddToCart }: CameraScannerProps) {
                   disabled={priceInvalid}
                   className="flex-[2] h-14 disabled:cursor-not-allowed"
                 >
-                  In mand
+                  Add to cart
                 </Button>
               </div>
             </div>

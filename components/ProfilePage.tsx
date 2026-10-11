@@ -19,19 +19,19 @@ export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps
 
       {/* Header */}
       <div className="px-6 pt-4 pb-6 flex-shrink-0">
-        <h1 className="type-hero">Profiel</h1>
+        <h1 className="type-hero">Profile</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col">
 
         <div className="border-t border-line">
           <div className="flex items-baseline justify-between gap-4 py-4 border-b border-line">
-            <span className="type-data text-muted">Gebruikersnaam</span>
+            <span className="type-data text-muted">Username</span>
             <span className="text-base font-medium truncate">@{username ?? '—'}</span>
           </div>
           <div className="flex items-baseline justify-between gap-4 py-4 border-b border-line">
-            <span className="type-data text-muted">Bestellingen</span>
-            <span className="type-data text-muted">Binnenkort</span>
+            <span className="type-data text-muted">Orders</span>
+            <span className="type-data text-muted">Coming soon</span>
           </div>
         </div>
 
@@ -41,7 +41,7 @@ export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps
             onClick={onNavigateToHeadsUp}
             className="block mx-auto text-sm text-muted underline active:opacity-70"
           >
-            Iets vreemds gezien? Laat het weten.
+            Seen something weird? Tell us.
           </button>
 
           <button
@@ -50,7 +50,7 @@ export function ProfilePage({ onSignOut, onNavigateToHeadsUp }: ProfilePageProps
             className="w-full flex items-center justify-center gap-2 h-14 rounded-sm border border-ink font-medium text-base active:opacity-70"
           >
             <LogOut className="w-4 h-4" />
-            Uitloggen
+            Sign out
           </button>
         </div>
 
